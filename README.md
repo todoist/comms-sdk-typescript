@@ -8,6 +8,8 @@ The official TypeScript SDK for the Comms REST API.
 npm install @todoist/comms-sdk
 ```
 
+In a browser, use it through a bundler such as rspack, Vite or esbuild: the package's `browser` field leaves undici out of the bundle, and requests go through the browser's `fetch`.
+
 Versions up to 4.x were published as `@doist/comms-sdk`.
 
 ## Usage
