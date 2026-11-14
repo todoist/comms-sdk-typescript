@@ -1,3 +1,9 @@
+## [5.1.1](https://github.com/todoist/comms-sdk-typescript/compare/v5.1.0...v5.1.1) (2026-11-14)
+
+### Bug Fixes
+
+* let browser bundlers leave undici out ([#149](https://github.com/todoist/comms-sdk-typescript/issues/149)) ([1cbf34f](https://github.com/todoist/comms-sdk-typescript/commit/1cbf34f097dd542db40def08f04c189579232334))
+
 ## [5.1.0](https://github.com/todoist/comms-sdk-typescript/compare/v5.0.2...v5.1.0) (2026-11-13)
 
 ### Features
