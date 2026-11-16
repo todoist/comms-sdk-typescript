@@ -24,6 +24,56 @@ describe('AttachmentsClient', () => {
         client = new AttachmentsClient({ apiToken: TEST_API_TOKEN })
     })
 
+    describe('readConversationImage', () => {
+        it('reads a conversation image by upload ID with the caller token', async () => {
+            const uploadId = generateId()
+            const conversationId = generateId()
+            let authorization: string | null = null
+            let requestedSearch: string | null = null
+            server.use(
+                http.get(
+                    apiUrl(`api/v1.0/files/conversation_image/${conversationId}/${uploadId}`),
+                    ({ request }) => {
+                        authorization = request.headers.get('Authorization')
+                        requestedSearch = new URL(request.url).search
+                        return HttpResponse.json({
+                            mime_type: 'image/png',
+                            data_base64: 'AQID',
+                            byte_length: 3,
+                            extra_field: 'ignored',
+                        })
+                    },
+                ),
+            )
+
+            await expect(client.readConversationImage(uploadId, conversationId)).resolves.toEqual({
+                mimeType: 'image/png',
+                dataBase64: 'AQID',
+                byteLength: 3,
+            })
+            expect(authorization).toBe(`Bearer ${TEST_API_TOKEN}`)
+            expect(requestedSearch).toBe('')
+        })
+
+        it('rejects invalid IDs before making a request', async () => {
+            let handlerCalled = false
+            server.use(
+                http.get(apiUrl('api/v1.0/files/conversation_image/*'), () => {
+                    handlerCalled = true
+                    return HttpResponse.json({})
+                }),
+            )
+
+            await expect(
+                client.readConversationImage('https://example.com/image', generateId()),
+            ).rejects.toThrow('invalid uploadId')
+            await expect(
+                client.readConversationImage(generateId(), 'not-a-conversation'),
+            ).rejects.toThrow('invalid conversationId')
+            expect(handlerCalled).toBe(false)
+        })
+    })
+
     describe('readImage', () => {
         it('accepts a 5 MiB image and rejects a larger response', () => {
             const image = Buffer.alloc(5 * 1024 * 1024)
