@@ -96,7 +96,7 @@ import { getAuthorizationUrl, getAuthToken, CommsApi } from '@todoist/comms-sdk'
 
 const authUrl = getAuthorizationUrl(
     'your-client-id',
-    ['user:read', 'channels:read'],
+    ['user:read', 'comms:channels:read'],
     'state-parameter',
     'https://yourapp.com/callback',
 )

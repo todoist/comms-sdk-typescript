@@ -27,65 +27,15 @@ function getAuthBaseUrl(baseUrl?: string): string {
 }
 
 /**
- * OAuth scopes for the Comms API.
+ * Scope names from before Comms used Todoist as its authorisation server.
  *
- * @remarks
- * Request only the scopes your application needs:
+ * Todoist's authorisation server doesn't offer these, and the Comms API checks
+ * the `comms:*` scopes in {@link COMMS_SCOPES} instead.
  *
- * **User Scopes:**
- * - `user:read` - Access user's personal settings
- * - `user:write` - Access and update user's personal settings
- *
- * **Workspace Scopes:**
- * - `workspaces:read` - Access teams the user is part of
- * - `workspaces:write` - Access and update teams the user is part of
- *
- * **Channel Scopes:**
- * - `channels:read` - Access channels
- * - `channels:write` - Access and update channels
- * - `channels:remove` - Access, update, and delete channels
- *
- * **Thread Scopes:**
- * - `threads:read` - Access threads
- * - `threads:write` - Access and update threads
- * - `threads:remove` - Access, update, and delete threads
- *
- * **Comment Scopes:**
- * - `comments:read` - Access comments
- * - `comments:write` - Access and update comments
- * - `comments:remove` - Access, update, and delete comments
- *
- * **Group Scopes:**
- * - `groups:read` - Access groups
- * - `groups:write` - Access and update groups
- * - `groups:remove` - Access, update, and delete groups
- *
- * **Message Scopes:**
- * - `messages:read` - Access messages
- * - `messages:write` - Access and update messages
- * - `messages:remove` - Access, update, and delete messages
- *
- * **Reaction Scopes:**
- * - `reactions:read` - Access reactions
- * - `reactions:write` - Access and update reactions
- * - `reactions:remove` - Access, update, and delete reactions
- *
- * **Search Scopes:**
- * - `search:read` - Search
- *
- * **Attachment Scopes:**
- * - `attachments:read` - Access attachments
- * - `attachments:write` - Access and update attachments
- *
- * **Notification Scopes:**
- * - `notifications:read` - Read user's notifications settings
- * - `notifications:write` - Read and update user's notifications settings
+ * @deprecated Use the scopes in {@link COMMS_SCOPES}. The next major version
+ * removes these names from {@link COMMS_SCOPES} and {@link CommsScope}.
  */
-export const COMMS_SCOPES = [
-    'user:read',
-    'user:write',
-    'workspaces:read',
-    'workspaces:write',
+export const LEGACY_COMMS_SCOPES = [
     'channels:read',
     'channels:write',
     'channels:remove',
@@ -109,6 +59,57 @@ export const COMMS_SCOPES = [
     'attachments:write',
     'notifications:read',
     'notifications:write',
+] as const
+/**
+ * A scope name from before Comms used Todoist as its authorisation server.
+ *
+ * @deprecated Use a {@link CommsScope} from the `comms:*`, `user:*` or
+ * `workspaces:*` scopes instead.
+ */
+export type LegacyCommsScope = (typeof LEGACY_COMMS_SCOPES)[number]
+
+/**
+ * OAuth scopes for the Comms API, as granted by Todoist.
+ *
+ * @remarks
+ * Request only the scopes your application needs. Each scope is exact:
+ * `comms:content:write` doesn't include `comms:content:read`, so ask for both
+ * if you read and write.
+ *
+ * - `user:read` - Read the person's profile and settings
+ * - `user:write` - Update the person's profile, settings, and status
+ * - `workspaces:read` - Read workspaces, members, and groups
+ * - `workspaces:write` - Update workspaces, invite and remove members, manage groups
+ * - `comms:channels:read` - Read channels, including metadata and membership
+ * - `comms:channels:write` - Create and update channels, and manage their members
+ * - `comms:channels:delete` - Delete or archive channels
+ * - `comms:content:read` - Read threads, comments, reactions, and attachments
+ * - `comms:content:write` - Create and update threads, comments, reactions, and attachments
+ * - `comms:content:delete` - Delete threads, comments, reactions, and attachments
+ * - `comms:messages:read` - Read 1:1 and group chats and their messages
+ * - `comms:messages:write` - Send, update, and pin chat messages, and start and manage chats
+ * - `comms:messages:delete` - Delete chat messages and remove people from chats
+ *
+ * Reactions use the `comms:content:*` scopes, including on chat messages.
+ *
+ * The list also contains the deprecated {@link LEGACY_COMMS_SCOPES}, which
+ * the next major version removes.
+ */
+export const COMMS_SCOPES = [
+    'user:read',
+    'user:write',
+    'workspaces:read',
+    'workspaces:write',
+    'comms:channels:read',
+    'comms:channels:write',
+    'comms:channels:delete',
+    'comms:content:read',
+    'comms:content:write',
+    'comms:content:delete',
+    'comms:messages:read',
+    'comms:messages:write',
+    'comms:messages:delete',
+    ...LEGACY_COMMS_SCOPES,
 ] as const
 /**
  * Scopes determine what access a token has to the Comms API.
