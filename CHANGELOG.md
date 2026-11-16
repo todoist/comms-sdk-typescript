@@ -1,3 +1,9 @@
+## [5.2.0](https://github.com/todoist/comms-sdk-typescript/compare/v5.1.2...v5.2.0) (2026-11-16)
+
+### Features
+
+* **auth:** add the Comms OAuth scopes Todoist grants ([#152](https://github.com/todoist/comms-sdk-typescript/issues/152)) ([babcc2e](https://github.com/todoist/comms-sdk-typescript/commit/babcc2ef3fffbe3e6af3252643f742938884f40f))
+
 ## [5.1.2](https://github.com/todoist/comms-sdk-typescript/compare/v5.1.1...v5.1.2) (2026-11-16)
 
 ### Bug Fixes
