@@ -1,3 +1,9 @@
+## [5.1.2](https://github.com/todoist/comms-sdk-typescript/compare/v5.1.1...v5.1.2) (2026-11-16)
+
+### Bug Fixes
+
+* **auth:** ask Todoist for a Comms token in getAuthorizationUrl ([#151](https://github.com/todoist/comms-sdk-typescript/issues/151)) ([c44f80c](https://github.com/todoist/comms-sdk-typescript/commit/c44f80c453ef03e08eef70c6418e0dff9b878690))
+
 ## [5.1.1](https://github.com/todoist/comms-sdk-typescript/compare/v5.1.0...v5.1.1) (2026-11-14)
 
 ### Bug Fixes
