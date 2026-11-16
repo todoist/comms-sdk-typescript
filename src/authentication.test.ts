@@ -6,6 +6,7 @@ import {
     refreshAuthToken,
     registerClient,
     revokeAuthToken,
+    COMMS_SCOPES,
     CommsScope,
 } from './authentication'
 import { server } from './testUtils/msw-setup'
@@ -65,10 +66,76 @@ describe('authentication', () => {
             expect(url).toContain('https://custom.comms.todoist.com/oauth/authorize')
         })
 
+        it('should request the Comms scopes Todoist grants', () => {
+            const url = new URL(
+                getAuthorizationUrl(
+                    'test-client-id',
+                    ['user:read', 'comms:content:read', 'comms:content:write'],
+                    'test-state',
+                ),
+            )
+
+            expect(url.searchParams.get('scope')).toBe(
+                'user:read comms:content:read comms:content:write',
+            )
+        })
+
         it('should throw error if no scopes provided', () => {
             expect(() => {
                 getAuthorizationUrl('client-id', [], 'state')
             }).toThrow('At least one scope value is required.')
+        })
+    })
+
+    describe('COMMS_SCOPES', () => {
+        it('should include every scope Todoist grants for the Comms API', () => {
+            expect(COMMS_SCOPES).toEqual(
+                expect.arrayContaining([
+                    'user:read',
+                    'user:write',
+                    'workspaces:read',
+                    'workspaces:write',
+                    'comms:channels:read',
+                    'comms:channels:write',
+                    'comms:channels:delete',
+                    'comms:content:read',
+                    'comms:content:write',
+                    'comms:content:delete',
+                    'comms:messages:read',
+                    'comms:messages:write',
+                    'comms:messages:delete',
+                ]),
+            )
+        })
+
+        it('should keep the legacy scope names so existing callers still compile', () => {
+            expect(COMMS_SCOPES).toEqual(
+                expect.arrayContaining([
+                    'channels:read',
+                    'channels:write',
+                    'channels:remove',
+                    'threads:read',
+                    'threads:write',
+                    'threads:remove',
+                    'comments:read',
+                    'comments:write',
+                    'comments:remove',
+                    'groups:read',
+                    'groups:write',
+                    'groups:remove',
+                    'messages:read',
+                    'messages:write',
+                    'messages:remove',
+                    'reactions:read',
+                    'reactions:write',
+                    'reactions:remove',
+                    'search:read',
+                    'attachments:read',
+                    'attachments:write',
+                    'notifications:read',
+                    'notifications:write',
+                ]),
+            )
         })
     })
 
