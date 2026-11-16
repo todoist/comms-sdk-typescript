@@ -39,8 +39,22 @@ describe('authentication', () => {
             const url = getAuthorizationUrl(clientId, scopes, state)
 
             expect(url).toBe(
-                'https://todoist.com/oauth/authorize?client_id=test-client-id&response_type=code&scope=user%3Aread+channels%3Awrite&state=test-state',
+                'https://todoist.com/oauth/authorize?client_id=test-client-id&response_type=code&scope=user%3Aread+channels%3Awrite&state=test-state&resource=https%3A%2F%2Fcomms.todoist.com',
             )
+        })
+
+        it('should still target Comms when the authorization server is overridden', () => {
+            const url = new URL(
+                getAuthorizationUrl(
+                    'test-client-id',
+                    ['user:read'],
+                    'test-state',
+                    undefined,
+                    'https://auth.example.com',
+                ),
+            )
+
+            expect(url.searchParams.get('resource')).toBe('https://comms.todoist.com')
         })
 
         it('should include redirect URI if provided', () => {

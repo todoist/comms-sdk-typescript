@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid'
+import { BASE_URI } from './consts/endpoints'
 import { isSuccess, request } from './transport/http-client'
 import { CommsRequestError } from './types/errors'
 import type { CustomFetch } from './types/http'
@@ -204,6 +205,10 @@ export function getAuthStateParameter(): string {
 /**
  * Generates the authorization URL for the OAuth2 flow.
  *
+ * The URL carries the Comms API as its `resource` indicator
+ * ({@link https://datatracker.ietf.org/doc/html/rfc8707 RFC 8707}), so Todoist
+ * issues a token for Comms rather than a Todoist API token.
+ *
  * The `clientId` can be either a traditional client ID string (e.g. from
  * {@link registerClient}) or an HTTPS URL pointing to a client metadata document,
  * as defined in {@link https://drafts.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/ RFC draft-ietf-oauth-client-id-metadata-document}.
@@ -226,6 +231,7 @@ export function getAuthorizationUrl(
         response_type: 'code',
         scope,
         state,
+        resource: BASE_URI,
     })
 
     if (redirectUri) {
