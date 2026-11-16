@@ -1,7 +1,7 @@
 import type { ApiVersion } from '../types/api-version'
 import { DEFAULT_API_VERSION } from '../types/api-version'
 
-const BASE_URI = 'https://comms.todoist.com'
+export const BASE_URI = 'https://comms.todoist.com'
 
 /**
  * Gets the base URI for Comms API requests.

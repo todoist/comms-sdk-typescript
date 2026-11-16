@@ -58,6 +58,8 @@ const authUrl = getAuthorizationUrl(
 res.redirect(authUrl)
 ```
 
+The URL always includes `resource=https://comms.todoist.com`, so Todoist issues a token for the Comms API rather than a Todoist API token. You don't need to add it yourself.
+
 **Function Signature:**
 
 ```typescript
