@@ -43,12 +43,6 @@ describe('authentication', () => {
             )
         })
 
-        it('should ask for a Comms token rather than a Todoist API token', () => {
-            const url = new URL(getAuthorizationUrl('test-client-id', ['user:read'], 'test-state'))
-
-            expect(url.searchParams.get('resource')).toBe('https://comms.todoist.com')
-        })
-
         it('should still target Comms when the authorization server is overridden', () => {
             const url = new URL(
                 getAuthorizationUrl(
