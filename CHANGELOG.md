@@ -1,3 +1,9 @@
+## [5.2.1](https://github.com/todoist/comms-sdk-typescript/compare/v5.2.0...v5.2.1) (2026-11-17)
+
+### Bug Fixes
+
+* **users:** accept a user status without a message ([#153](https://github.com/todoist/comms-sdk-typescript/issues/153)) ([77caba5](https://github.com/todoist/comms-sdk-typescript/commit/77caba5c4a4ee1bee8a2db019e16e7b8ff3e36c8))
+
 ## [5.2.0](https://github.com/todoist/comms-sdk-typescript/compare/v5.1.2...v5.2.0) (2026-11-16)
 
 ### Features
