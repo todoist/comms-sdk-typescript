@@ -216,8 +216,8 @@ export class UsersClient extends BaseClient {
      * The status belongs to the Todoist account, so it is shared with Todoist.
      * Requires the `user:write` scope.
      *
-     * @param args - The status to set.
-     * @param args.message - 1 to 80 characters once trimmed. Required when creating a status.
+     * @param args - The status to set. A status needs a message, an emoji or both.
+     * @param args.message - 1 to 80 characters once trimmed; null removes it, omission preserves it.
      * @param args.emoji - Emoji to set; null removes it, omission preserves it.
      * @param args.activeUntil - Future expiry (`Date` or ISO string); null removes it, omission preserves it.
      * @param args.effects - Merge supplied effects. Omission or {} preserves effects; null clears all.
