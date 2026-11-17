@@ -45,7 +45,7 @@ export const ImageReadResultSchema = z.object({
 export type ImageReadResult = z.infer<typeof ImageReadResultSchema>
 
 /**
- * Client for uploading attachments and reading thread images.
+ * Client for uploading attachments and reading thread and conversation images.
  *
  * Attachments are uploaded independently, then referenced by passing the returned
  * {@link Attachment} into the `attachments` array of `comments.createComment`,
@@ -60,6 +60,32 @@ export class AttachmentsClient extends BaseClient {
             httpMethod: 'GET',
             baseUri: this.getBaseUri(),
             relativePath: `${ENDPOINT_FILES}/image/${checkedThreadId}/${id}`,
+            apiToken: this.apiToken,
+            headers: this.headers,
+            customFetch: this.customFetch,
+        })
+        return ImageReadResultSchema.parse(response.data)
+    }
+
+    /**
+     * Read one image sent in a conversation, under the caller's messages scope.
+     *
+     * The caller must be a member of the conversation, and the upload must belong to it.
+     *
+     * @param uploadId - The upload ID of the image.
+     * @param conversationId - The conversation the image was sent in.
+     * @returns The image as base64, with its media type and size in bytes.
+     */
+    async readConversationImage(
+        uploadId: string,
+        conversationId: string,
+    ): Promise<ImageReadResult> {
+        const id = resolveReferenceId(uploadId, 'uploadId')
+        const checkedConversationId = resolveReferenceId(conversationId, 'conversationId')
+        const response = await request<unknown>({
+            httpMethod: 'GET',
+            baseUri: this.getBaseUri(),
+            relativePath: `${ENDPOINT_FILES}/conversation_image/${checkedConversationId}/${id}`,
             apiToken: this.apiToken,
             headers: this.headers,
             customFetch: this.customFetch,
