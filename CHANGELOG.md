@@ -1,3 +1,9 @@
+## [5.2.2](https://github.com/todoist/comms-sdk-typescript/compare/v5.2.1...v5.2.2) (2026-11-17)
+
+### Bug Fixes
+
+* **users:** let setStatus clear the message of an emoji status ([#154](https://github.com/todoist/comms-sdk-typescript/issues/154)) ([807b33c](https://github.com/todoist/comms-sdk-typescript/commit/807b33c0707bed29282c2149258082c8fbeab9ce))
+
 ## [5.2.1](https://github.com/todoist/comms-sdk-typescript/compare/v5.2.0...v5.2.1) (2026-11-17)
 
 ### Bug Fixes
