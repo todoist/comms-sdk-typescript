@@ -1,3 +1,9 @@
+## [5.3.0](https://github.com/todoist/comms-sdk-typescript/compare/v5.2.2...v5.3.0) (2026-11-17)
+
+### Features
+
+* read an image sent in a conversation ([#150](https://github.com/todoist/comms-sdk-typescript/issues/150)) ([4eb8dd8](https://github.com/todoist/comms-sdk-typescript/commit/4eb8dd8c3cb61b327a661608b5bf82fbe5b34688))
+
 ## [5.2.2](https://github.com/todoist/comms-sdk-typescript/compare/v5.2.1...v5.2.2) (2026-11-17)
 
 ### Bug Fixes
