@@ -113,6 +113,10 @@ describe('UsersClient status', () => {
             },
             { args: { effects: null }, expected: { effects: null } },
             {
+                args: { message: null, emoji: '🎯' },
+                expected: { message: null, emoji: '🎯' },
+            },
+            {
                 args: { effects: { pauseNotifications: { scope: {} } } },
                 expected: { effects: { pause_notifications: { scope: {} } } },
             },
