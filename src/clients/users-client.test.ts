@@ -175,6 +175,21 @@ describe('UsersClient status', () => {
             expect(user.status).toEqual({ message: 'Away', emoji: null })
         })
 
+        it.each([
+            ['null', { message: null, emoji: '🎯' }],
+            ['absent', { emoji: '🎯' }],
+        ])('exposes an emoji-only status whose message is %s', async (_name, status) => {
+            server.use(
+                http.get(apiUrl('api/v1.0/users/get_session_user'), () =>
+                    HttpResponse.json({ ...mockUser, status }),
+                ),
+            )
+
+            const user = await client.getSessionUser()
+
+            expect(user.status).toEqual(status)
+        })
+
         it('parses a pause_activity effect next to pause_notifications', async () => {
             server.use(
                 http.get(apiUrl('api/v1.0/users/get_session_user'), () =>

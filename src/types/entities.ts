@@ -71,9 +71,10 @@ export const StatusEffectSchema = z.object({
 
 // Shared user status. It lives on the Todoist account, so Comms, Todoist and
 // automations all see the same one. `activeUntil` is an RFC 3339 string, and an
-// expired status is returned as `null` rather than as an expired object.
+// expired status is returned as `null` rather than as an expired object. A
+// status needs a message, an emoji or both, so either can be missing.
 export const UserStatusSchema = z.object({
-    message: z.string(),
+    message: z.string().nullable().optional(),
     emoji: z.string().nullable().optional(),
     activeUntil: z.string().nullable().optional(),
     effects: z

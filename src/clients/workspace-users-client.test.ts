@@ -129,5 +129,22 @@ describe('WorkspaceUsersClient', () => {
             expect(result).toHaveLength(2)
             expect(result.map((user) => user.id)).toEqual([1, 2])
         })
+
+        // A status can be just an emoji, which the API returns with a null message. One such
+        // user used to fail the whole list.
+        it('returns a user whose status has an emoji but no message', async () => {
+            server.use(
+                http.get(apiUrl('api/v1.0/workspace_users/get'), () =>
+                    HttpResponse.json([
+                        { ...mockWorkspaceUser, status: { message: null, emoji: '🎯' } },
+                    ]),
+                ),
+            )
+
+            const result = await client.getWorkspaceUsers({ workspaceId: 123 })
+
+            expect(result).toHaveLength(1)
+            expect(result[0].status).toEqual({ message: null, emoji: '🎯' })
+        })
     })
 })
