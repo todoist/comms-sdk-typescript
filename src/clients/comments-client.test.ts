@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { CommsApi } from '../comms-api'
 import { server } from '../testUtils/msw-setup'
 import {
@@ -226,6 +226,24 @@ describe('CommentsClient — deleteComment', () => {
 
         await expect(api.comments.deleteComment(TEST_COMMENT_ID)).resolves.toBeUndefined()
         expect(capturedBody).toEqual({ id: TEST_COMMENT_ID })
+    })
+
+    it('resolves without reading the body of a successful response', async () => {
+        const text = vi.fn().mockRejectedValue(new Error('body stream failed'))
+        const customFetch = vi.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            text,
+            json: text,
+        })
+
+        const api = new CommsApi(TEST_API_TOKEN, { customFetch })
+
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).resolves.toBeUndefined()
+        expect(customFetch).toHaveBeenCalledTimes(1)
+        expect(text).not.toHaveBeenCalled()
     })
 
     it('still rejects on a non-2xx response', async () => {

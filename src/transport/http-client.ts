@@ -62,6 +62,8 @@ export type RequestArgs = {
     requestId?: string
     headers?: CustomHeaders
     customFetch?: CustomFetch
+    /** Resolve on a 2xx response without reading its body. Error responses are still read. */
+    ignoreResponseBody?: boolean
 }
 
 export async function request<T>(args: RequestArgs): Promise<HttpResponse<T>> {
@@ -74,15 +76,17 @@ export async function request<T>(args: RequestArgs): Promise<HttpResponse<T>> {
         requestId,
         headers,
         customFetch,
+        ignoreResponseBody,
     } = args
 
     const config = getRequestConfiguration(baseUri, apiToken, requestId, headers)
     const url = new URL(relativePath, config.baseURL).toString()
 
-    const options: RequestInit & { timeout?: number } = {
+    const options: RequestInit & { timeout?: number; ignoreResponseBody?: boolean } = {
         method: httpMethod,
         headers: config.headers,
         timeout: config.timeout,
+        ...(ignoreResponseBody ? { ignoreResponseBody } : {}),
     }
 
     if (httpMethod === 'GET' && payload) {

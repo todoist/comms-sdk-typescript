@@ -162,6 +162,7 @@ export class ConversationMessagesClient extends BaseClient {
             payload: { id },
             headers: this.headers,
             customFetch: this.customFetch,
+            ignoreResponseBody: true,
         }).then(() => undefined)
     }
 

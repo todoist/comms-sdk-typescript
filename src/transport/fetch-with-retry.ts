@@ -6,7 +6,7 @@ import { getDefaultTransport } from './http-dispatcher'
 
 export async function fetchWithRetry<T>(
     url: string,
-    options: RequestInit & { timeout?: number },
+    options: RequestInit & { timeout?: number; ignoreResponseBody?: boolean },
     maxRetries: number = 3,
     customFetch?: CustomFetch,
 ): Promise<HttpResponse<T>> {
@@ -27,6 +27,18 @@ export async function fetchWithRetry<T>(
             const response: CustomFetchResponse = customFetch
                 ? await customFetch(url, options)
                 : await fetchWithDefaultTransport(url, options, requestSignal)
+
+            if (options.ignoreResponseBody && response.ok) {
+                if (clearTimeoutFn) {
+                    clearTimeoutFn()
+                }
+
+                return {
+                    data: undefined as T,
+                    status: response.status,
+                    headers: response.headers,
+                }
+            }
 
             const responseText = await response.text()
             let responseData: T
