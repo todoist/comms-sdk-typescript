@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { CommsApi } from '../comms-api'
 import { server } from '../testUtils/msw-setup'
 import {
@@ -197,5 +197,77 @@ describe('CommentsClient — baseUrl in entity links', () => {
         expect(comment.url).toBe(
             `https://comms.example.com/1/ch/${responseChannelId}/t/${TEST_THREAD_ID}/c/${responseCommentId}`,
         )
+    })
+})
+
+describe('CommentsClient — deleteComment', () => {
+    it('resolves when the API returns the deleted comment instead of {status: "ok"}', async () => {
+        let capturedBody: unknown
+        server.use(
+            http.post(`${BASE}/comments/remove`, async ({ request }) => {
+                capturedBody = await request.json()
+                return HttpResponse.json({
+                    id: TEST_COMMENT_ID,
+                    workspace_id: 1,
+                    channel_id: TEST_CHANNEL_ID,
+                    thread_id: TEST_THREAD_ID,
+                    creator: 1,
+                    posted_ts: 1794994991,
+                    content: '-',
+                    deleted: true,
+                    deleted_by: 1,
+                    version: 1,
+                    reactions: {},
+                })
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).resolves.toBeUndefined()
+        expect(capturedBody).toEqual({ id: TEST_COMMENT_ID })
+    })
+
+    it('resolves without reading the body of a successful response', async () => {
+        const text = vi.fn().mockRejectedValue(new Error('body stream failed'))
+        const customFetch = vi.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            text,
+            json: text,
+        })
+
+        const api = new CommsApi(TEST_API_TOKEN, { customFetch })
+
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).resolves.toBeUndefined()
+        expect(customFetch).toHaveBeenCalledTimes(1)
+        expect(text).not.toHaveBeenCalled()
+    })
+
+    it('resolves on a 204 response with no body', async () => {
+        server.use(
+            http.post(`${BASE}/comments/remove`, () => new HttpResponse(null, { status: 204 })),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).resolves.toBeUndefined()
+    })
+
+    it('still rejects on a non-2xx response', async () => {
+        server.use(
+            http.post(`${BASE}/comments/remove`, () =>
+                HttpResponse.json({ error: 'not found' }, { status: 404 }),
+            ),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).rejects.toMatchObject({
+            httpStatusCode: 404,
+            responseData: { error: 'not found' },
+        })
     })
 })

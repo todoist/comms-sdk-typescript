@@ -5,8 +5,6 @@ import {
     type ConversationMessage,
     ConversationMessageSchema,
     createConversationMessageSchema,
-    type StatusOk,
-    StatusOkSchema,
 } from '../types/entities'
 import type {
     CreateConversationMessageArgs,
@@ -148,6 +146,10 @@ export class ConversationMessagesClient extends BaseClient {
     /**
      * Permanently deletes a conversation message.
      *
+     * Resolves on any 2xx response without reading its body: the API returns the deleted message
+     * rather than `{ status: 'ok' }`, so there is no status to parse. Rejects with
+     * `CommsRequestError` otherwise.
+     *
      * @param id - The message ID.
      *
      * @example
@@ -155,16 +157,27 @@ export class ConversationMessagesClient extends BaseClient {
      * await api.conversationMessages.deleteMessage('7YpL3oZ4kZ9vP7Q1tR2sX43')
      * ```
      */
-    deleteMessage(id: string): Promise<StatusOk> {
-        return this.simple('POST', 'remove', { id }, StatusOkSchema)
+    deleteMessage(id: string): Promise<void> {
+        return this.simple('POST', 'remove', { id })
     }
 
+    private simple(
+        httpMethod: 'GET' | 'POST',
+        suffix: string,
+        params: Record<string, unknown>,
+    ): Promise<void>
     private simple<T>(
         httpMethod: 'GET' | 'POST',
         suffix: string,
         params: Record<string, unknown>,
         schema: z.ZodType<T>,
-    ): Promise<T> {
+    ): Promise<T>
+    private simple<T>(
+        httpMethod: 'GET' | 'POST',
+        suffix: string,
+        params: Record<string, unknown>,
+        schema?: z.ZodType<T>,
+    ): Promise<T | void> {
         return request<T>({
             httpMethod,
             baseUri: this.getBaseUri(),
@@ -173,6 +186,7 @@ export class ConversationMessagesClient extends BaseClient {
             payload: params,
             headers: this.headers,
             customFetch: this.customFetch,
-        }).then((response) => schema.parse(response.data))
+            ignoreResponseBody: !schema,
+        }).then((response) => (schema ? schema.parse(response.data) : undefined))
     }
 }

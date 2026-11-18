@@ -155,10 +155,14 @@ export class CommentsClient extends BaseClient {
     /**
      * Permanently deletes a comment.
      *
+     * Resolves on any 2xx response without reading its body: the API returns the deleted comment
+     * rather than `{ status: 'ok' }`, so there is no status to parse. Rejects with
+     * `CommsRequestError` otherwise.
+     *
      * @param id - The comment ID.
      */
-    deleteComment(id: string): Promise<StatusOk> {
-        return request<StatusOk>({
+    deleteComment(id: string): Promise<void> {
+        return request<void>({
             httpMethod: 'POST',
             baseUri: this.getBaseUri(),
             relativePath: `${ENDPOINT_COMMENTS}/remove`,
@@ -166,7 +170,8 @@ export class CommentsClient extends BaseClient {
             payload: { id },
             headers: this.headers,
             customFetch: this.customFetch,
-        }).then((response) => StatusOkSchema.parse(response.data))
+            ignoreResponseBody: true,
+        }).then(() => undefined)
     }
 
     /**

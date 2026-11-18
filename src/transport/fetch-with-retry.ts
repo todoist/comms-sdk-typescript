@@ -6,7 +6,7 @@ import { getDefaultTransport } from './http-dispatcher'
 
 export async function fetchWithRetry<T>(
     url: string,
-    options: RequestInit & { timeout?: number },
+    options: RequestInit & { timeout?: number; ignoreResponseBody?: boolean },
     maxRetries: number = 3,
     customFetch?: CustomFetch,
 ): Promise<HttpResponse<T>> {
@@ -27,6 +27,18 @@ export async function fetchWithRetry<T>(
             const response: CustomFetchResponse = customFetch
                 ? await customFetch(url, options)
                 : await fetchWithDefaultTransport(url, options, requestSignal)
+
+            if (options.ignoreResponseBody && response.ok) {
+                if (clearTimeoutFn) {
+                    clearTimeoutFn()
+                }
+
+                return {
+                    data: undefined as T,
+                    status: response.status,
+                    headers: response.headers,
+                }
+            }
 
             const responseText = await response.text()
             let responseData: T
@@ -151,7 +163,7 @@ function describeCause(error: Error): string {
 
 async function fetchWithDefaultTransport(
     url: string,
-    options: RequestInit & { timeout?: number },
+    options: RequestInit & { timeout?: number; ignoreResponseBody?: boolean },
     signal?: AbortSignal,
 ): Promise<CustomFetchResponse> {
     // Read the dispatcher and its paired `fetch` as one value so they can never
@@ -176,6 +188,12 @@ async function fetchWithDefaultTransport(
               ...options,
               signal,
           })
+
+    if (options.ignoreResponseBody && response.ok) {
+        // Release the connection without reading the body; the cancel is not awaited so it can
+        // neither delay the result nor trigger a retry
+        response.body?.cancel().catch(() => undefined)
+    }
 
     return convertResponseToCustomFetch(response)
 }

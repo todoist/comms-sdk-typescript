@@ -106,6 +106,41 @@ describe('fetchWithRetry transport selection', () => {
         )
     })
 
+    it('cancels the body of a successful response when ignoreResponseBody is set', async () => {
+        const dispatcher = { id: 'default-dispatcher' } as unknown as Dispatcher
+        const cancel = vi.fn()
+        const body = new ReadableStream({ cancel })
+        mockFetch.mockResolvedValueOnce(new Response(body, { status: 200 }))
+        const { fetchWithRetry } = await importFetchWithRetryWithMockedTransport(dispatcher)
+
+        const response = await fetchWithRetry('https://api.test.com/comments/remove', {
+            method: 'POST',
+            ignoreResponseBody: true,
+        })
+
+        expect(response.status).toBe(200)
+        expect(response.data).toBeUndefined()
+        expect(cancel).toHaveBeenCalledTimes(1)
+        expect(mockFetch).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not retry when cancelling the ignored body fails', async () => {
+        const dispatcher = { id: 'default-dispatcher' } as unknown as Dispatcher
+        const body = new ReadableStream({
+            cancel: () => Promise.reject(new Error('cancel failed')),
+        })
+        mockFetch.mockResolvedValueOnce(new Response(body, { status: 200 }))
+        const { fetchWithRetry } = await importFetchWithRetryWithMockedTransport(dispatcher)
+
+        await expect(
+            fetchWithRetry('https://api.test.com/comments/remove', {
+                method: 'POST',
+                ignoreResponseBody: true,
+            }),
+        ).resolves.toMatchObject({ status: 200 })
+        expect(mockFetch).toHaveBeenCalledTimes(1)
+    })
+
     it('does not consult the default dispatcher when customFetch is provided', async () => {
         const dispatcher = { id: 'default-dispatcher' } as unknown as Dispatcher
         const { fetchWithRetry, getDefaultTransport } =
