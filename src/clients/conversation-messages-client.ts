@@ -146,6 +146,10 @@ export class ConversationMessagesClient extends BaseClient {
     /**
      * Permanently deletes a conversation message.
      *
+     * Resolves on any 2xx response without reading its body: the API returns the deleted message
+     * rather than `{ status: 'ok' }`, so there is no status to parse. Rejects with
+     * `CommsRequestError` otherwise.
+     *
      * @param id - The message ID.
      *
      * @example
