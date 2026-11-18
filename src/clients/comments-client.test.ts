@@ -9,7 +9,6 @@ import {
     TEST_COMMENT_ID,
     TEST_THREAD_ID,
 } from '../testUtils/test-defaults'
-import { CommsRequestError } from '../types/errors'
 import { CreateCommentArgsSchema } from '../types/requests'
 
 // These tests pin the wire shape of `comments-client` — every camelCase
@@ -266,6 +265,9 @@ describe('CommentsClient — deleteComment', () => {
 
         const api = new CommsApi(TEST_API_TOKEN)
 
-        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).rejects.toThrow(CommsRequestError)
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).rejects.toMatchObject({
+            httpStatusCode: 404,
+            responseData: { error: 'not found' },
+        })
     })
 })

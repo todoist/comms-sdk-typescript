@@ -8,7 +8,6 @@ import {
     TEST_CONVERSATION_ID,
     TEST_MESSAGE_ID,
 } from '../testUtils/test-defaults'
-import { CommsRequestError } from '../types/errors'
 import { generateId } from '../utils/uuidv7'
 
 // The transport layer parses JSON, camelCases keys, and turns `*_ts`
@@ -162,8 +161,11 @@ describe('ConversationMessagesClient — deleteMessage', () => {
 
         const api = new CommsApi(TEST_API_TOKEN)
 
-        await expect(api.conversationMessages.deleteMessage(TEST_MESSAGE_ID)).rejects.toThrow(
-            CommsRequestError,
+        await expect(api.conversationMessages.deleteMessage(TEST_MESSAGE_ID)).rejects.toMatchObject(
+            {
+                httpStatusCode: 404,
+                responseData: { error: 'not found' },
+            },
         )
     })
 })
