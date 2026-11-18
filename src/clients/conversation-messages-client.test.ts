@@ -8,6 +8,7 @@ import {
     TEST_CONVERSATION_ID,
     TEST_MESSAGE_ID,
 } from '../testUtils/test-defaults'
+import { CommsRequestError } from '../types/errors'
 import { generateId } from '../utils/uuidv7'
 
 // The transport layer parses JSON, camelCases keys, and turns `*_ts`
@@ -137,6 +138,21 @@ describe('ConversationMessagesClient — deleteMessage', () => {
         expect(text).not.toHaveBeenCalled()
     })
 
+    it('resolves on a 204 response with no body', async () => {
+        server.use(
+            http.post(
+                `${BASE}/conversation_messages/remove`,
+                () => new HttpResponse(null, { status: 204 }),
+            ),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+
+        await expect(
+            api.conversationMessages.deleteMessage(TEST_MESSAGE_ID),
+        ).resolves.toBeUndefined()
+    })
+
     it('still rejects on a non-2xx response', async () => {
         server.use(
             http.post(`${BASE}/conversation_messages/remove`, () =>
@@ -146,6 +162,8 @@ describe('ConversationMessagesClient — deleteMessage', () => {
 
         const api = new CommsApi(TEST_API_TOKEN)
 
-        await expect(api.conversationMessages.deleteMessage(TEST_MESSAGE_ID)).rejects.toThrow()
+        await expect(api.conversationMessages.deleteMessage(TEST_MESSAGE_ID)).rejects.toThrow(
+            CommsRequestError,
+        )
     })
 })

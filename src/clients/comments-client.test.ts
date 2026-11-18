@@ -9,6 +9,7 @@ import {
     TEST_COMMENT_ID,
     TEST_THREAD_ID,
 } from '../testUtils/test-defaults'
+import { CommsRequestError } from '../types/errors'
 import { CreateCommentArgsSchema } from '../types/requests'
 
 // These tests pin the wire shape of `comments-client` — every camelCase
@@ -208,14 +209,14 @@ describe('CommentsClient — deleteComment', () => {
                 capturedBody = await request.json()
                 return HttpResponse.json({
                     id: TEST_COMMENT_ID,
-                    workspace_id: 167,
+                    workspace_id: 1,
                     channel_id: TEST_CHANNEL_ID,
                     thread_id: TEST_THREAD_ID,
-                    creator: 8311401,
+                    creator: 1,
                     posted_ts: 1794994991,
                     content: '-',
                     deleted: true,
-                    deleted_by: 8311401,
+                    deleted_by: 1,
                     version: 1,
                     reactions: {},
                 })
@@ -246,6 +247,16 @@ describe('CommentsClient — deleteComment', () => {
         expect(text).not.toHaveBeenCalled()
     })
 
+    it('resolves on a 204 response with no body', async () => {
+        server.use(
+            http.post(`${BASE}/comments/remove`, () => new HttpResponse(null, { status: 204 })),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).resolves.toBeUndefined()
+    })
+
     it('still rejects on a non-2xx response', async () => {
         server.use(
             http.post(`${BASE}/comments/remove`, () =>
@@ -255,6 +266,6 @@ describe('CommentsClient — deleteComment', () => {
 
         const api = new CommsApi(TEST_API_TOKEN)
 
-        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).rejects.toThrow()
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).rejects.toThrow(CommsRequestError)
     })
 })
