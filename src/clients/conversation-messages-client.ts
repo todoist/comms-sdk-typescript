@@ -154,7 +154,7 @@ export class ConversationMessagesClient extends BaseClient {
      * ```
      */
     deleteMessage(id: string): Promise<void> {
-        return request({
+        return request<void>({
             httpMethod: 'POST',
             baseUri: this.getBaseUri(),
             relativePath: `${ENDPOINT_CONVERSATION_MESSAGES}/remove`,

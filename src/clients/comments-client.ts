@@ -158,7 +158,7 @@ export class CommentsClient extends BaseClient {
      * @param id - The comment ID.
      */
     deleteComment(id: string): Promise<void> {
-        return request({
+        return request<void>({
             httpMethod: 'POST',
             baseUri: this.getBaseUri(),
             relativePath: `${ENDPOINT_COMMENTS}/remove`,
