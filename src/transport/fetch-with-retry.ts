@@ -163,7 +163,7 @@ function describeCause(error: Error): string {
 
 async function fetchWithDefaultTransport(
     url: string,
-    options: RequestInit & { timeout?: number },
+    options: RequestInit & { timeout?: number; ignoreResponseBody?: boolean },
     signal?: AbortSignal,
 ): Promise<CustomFetchResponse> {
     // Read the dispatcher and its paired `fetch` as one value so they can never
@@ -188,6 +188,12 @@ async function fetchWithDefaultTransport(
               ...options,
               signal,
           })
+
+    if (options.ignoreResponseBody && response.ok) {
+        // Release the connection without reading the body; the cancel is not awaited so it can
+        // neither delay the result nor trigger a retry
+        response.body?.cancel().catch(() => undefined)
+    }
 
     return convertResponseToCustomFetch(response)
 }
