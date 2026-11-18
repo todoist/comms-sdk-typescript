@@ -154,24 +154,26 @@ export class ConversationMessagesClient extends BaseClient {
      * ```
      */
     deleteMessage(id: string): Promise<void> {
-        return request<void>({
-            httpMethod: 'POST',
-            baseUri: this.getBaseUri(),
-            relativePath: `${ENDPOINT_CONVERSATION_MESSAGES}/remove`,
-            apiToken: this.apiToken,
-            payload: { id },
-            headers: this.headers,
-            customFetch: this.customFetch,
-            ignoreResponseBody: true,
-        }).then(() => undefined)
+        return this.simple('POST', 'remove', { id })
     }
 
+    private simple(
+        httpMethod: 'GET' | 'POST',
+        suffix: string,
+        params: Record<string, unknown>,
+    ): Promise<void>
     private simple<T>(
         httpMethod: 'GET' | 'POST',
         suffix: string,
         params: Record<string, unknown>,
         schema: z.ZodType<T>,
-    ): Promise<T> {
+    ): Promise<T>
+    private simple<T>(
+        httpMethod: 'GET' | 'POST',
+        suffix: string,
+        params: Record<string, unknown>,
+        schema?: z.ZodType<T>,
+    ): Promise<T | void> {
         return request<T>({
             httpMethod,
             baseUri: this.getBaseUri(),
@@ -180,6 +182,7 @@ export class ConversationMessagesClient extends BaseClient {
             payload: params,
             headers: this.headers,
             customFetch: this.customFetch,
-        }).then((response) => schema.parse(response.data))
+            ignoreResponseBody: !schema,
+        }).then((response) => (schema ? schema.parse(response.data) : undefined))
     }
 }
