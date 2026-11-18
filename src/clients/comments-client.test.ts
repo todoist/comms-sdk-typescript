@@ -199,3 +199,44 @@ describe('CommentsClient — baseUrl in entity links', () => {
         )
     })
 })
+
+describe('CommentsClient — deleteComment', () => {
+    it('resolves when the API returns the deleted comment instead of {status: "ok"}', async () => {
+        let capturedBody: unknown
+        server.use(
+            http.post(`${BASE}/comments/remove`, async ({ request }) => {
+                capturedBody = await request.json()
+                return HttpResponse.json({
+                    id: TEST_COMMENT_ID,
+                    workspace_id: 167,
+                    channel_id: TEST_CHANNEL_ID,
+                    thread_id: TEST_THREAD_ID,
+                    creator: 8311401,
+                    posted_ts: 1794994991,
+                    content: '-',
+                    deleted: true,
+                    deleted_by: 8311401,
+                    version: 1,
+                    reactions: {},
+                })
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).resolves.toBeUndefined()
+        expect(capturedBody).toEqual({ id: TEST_COMMENT_ID })
+    })
+
+    it('still rejects on a non-2xx response', async () => {
+        server.use(
+            http.post(`${BASE}/comments/remove`, () =>
+                HttpResponse.json({ error: 'not found' }, { status: 404 }),
+            ),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+
+        await expect(api.comments.deleteComment(TEST_COMMENT_ID)).rejects.toThrow()
+    })
+})

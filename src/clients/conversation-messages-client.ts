@@ -5,8 +5,6 @@ import {
     type ConversationMessage,
     ConversationMessageSchema,
     createConversationMessageSchema,
-    type StatusOk,
-    StatusOkSchema,
 } from '../types/entities'
 import type {
     CreateConversationMessageArgs,
@@ -155,8 +153,16 @@ export class ConversationMessagesClient extends BaseClient {
      * await api.conversationMessages.deleteMessage('7YpL3oZ4kZ9vP7Q1tR2sX43')
      * ```
      */
-    deleteMessage(id: string): Promise<StatusOk> {
-        return this.simple('POST', 'remove', { id }, StatusOkSchema)
+    deleteMessage(id: string): Promise<void> {
+        return request({
+            httpMethod: 'POST',
+            baseUri: this.getBaseUri(),
+            relativePath: `${ENDPOINT_CONVERSATION_MESSAGES}/remove`,
+            apiToken: this.apiToken,
+            payload: { id },
+            headers: this.headers,
+            customFetch: this.customFetch,
+        }).then(() => undefined)
     }
 
     private simple<T>(

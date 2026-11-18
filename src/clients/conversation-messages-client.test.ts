@@ -6,6 +6,7 @@ import {
     TEST_API_BASE_URL as BASE,
     TEST_API_TOKEN,
     TEST_CONVERSATION_ID,
+    TEST_MESSAGE_ID,
 } from '../testUtils/test-defaults'
 import { generateId } from '../utils/uuidv7'
 
@@ -89,5 +90,42 @@ describe('ConversationMessagesClient — wire serialization', () => {
             notify: false,
         })
         expect(body.id).toBeTypeOf('string')
+    })
+})
+
+describe('ConversationMessagesClient — deleteMessage', () => {
+    it('resolves when the API returns the deleted message instead of {status: "ok"}', async () => {
+        let capturedBody: unknown
+        server.use(
+            http.post(`${BASE}/conversation_messages/remove`, async ({ request }) => {
+                capturedBody = await request.json()
+                return HttpResponse.json({
+                    ...MESSAGE_RESPONSE,
+                    id: TEST_MESSAGE_ID,
+                    deleted: true,
+                    deleted_by: 1,
+                    version: 1,
+                })
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+
+        await expect(
+            api.conversationMessages.deleteMessage(TEST_MESSAGE_ID),
+        ).resolves.toBeUndefined()
+        expect(capturedBody).toEqual({ id: TEST_MESSAGE_ID })
+    })
+
+    it('still rejects on a non-2xx response', async () => {
+        server.use(
+            http.post(`${BASE}/conversation_messages/remove`, () =>
+                HttpResponse.json({ error: 'not found' }, { status: 404 }),
+            ),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+
+        await expect(api.conversationMessages.deleteMessage(TEST_MESSAGE_ID)).rejects.toThrow()
     })
 })

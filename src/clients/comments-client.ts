@@ -157,8 +157,8 @@ export class CommentsClient extends BaseClient {
      *
      * @param id - The comment ID.
      */
-    deleteComment(id: string): Promise<StatusOk> {
-        return request<StatusOk>({
+    deleteComment(id: string): Promise<void> {
+        return request({
             httpMethod: 'POST',
             baseUri: this.getBaseUri(),
             relativePath: `${ENDPOINT_COMMENTS}/remove`,
@@ -166,7 +166,7 @@ export class CommentsClient extends BaseClient {
             payload: { id },
             headers: this.headers,
             customFetch: this.customFetch,
-        }).then((response) => StatusOkSchema.parse(response.data))
+        }).then(() => undefined)
     }
 
     /**
