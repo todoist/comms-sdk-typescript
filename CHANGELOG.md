@@ -1,3 +1,13 @@
+## [6.0.0](https://github.com/todoist/comms-sdk-typescript/compare/v5.3.0...v6.0.0) (2026-11-18)
+
+### ⚠ BREAKING CHANGES
+
+* resolve deleteComment and deleteMessage without parsing the response body (#156)
+
+### Bug Fixes
+
+* resolve deleteComment and deleteMessage without parsing the response body ([#156](https://github.com/todoist/comms-sdk-typescript/issues/156)) ([c2b0867](https://github.com/todoist/comms-sdk-typescript/commit/c2b0867176bc9a7693e2112b078779d506f7b14d))
+
 ## [5.3.0](https://github.com/todoist/comms-sdk-typescript/compare/v5.2.2...v5.3.0) (2026-11-17)
 
 ### Features
