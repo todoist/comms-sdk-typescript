@@ -75,6 +75,25 @@ describe('ConversationsClient — wire serialization', () => {
         expect(params.has('limit')).toBe(false)
     })
 
+    it('updateConversation sends silent so a rename posts no "changed the title" message', async () => {
+        let body: Record<string, unknown> | undefined
+        server.use(
+            http.post(`${BASE}/conversations/update`, async ({ request }) => {
+                body = (await request.json()) as Record<string, unknown>
+                return HttpResponse.json({ ...CONVERSATION_RESPONSE, title: 'Renamed' })
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        await api.conversations.updateConversation({
+            id: TEST_CONVERSATION_ID,
+            title: 'Renamed',
+            silent: true,
+        })
+
+        expect(body).toEqual({ id: TEST_CONVERSATION_ID, title: 'Renamed', silent: true })
+    })
+
     it.each([
         ['archiveConversation', 'archive', true],
         ['unarchiveConversation', 'unarchive', false],

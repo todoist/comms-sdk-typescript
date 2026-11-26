@@ -142,6 +142,9 @@ export class ConversationsClient extends BaseClient {
      * @param args.id - The conversation ID.
      * @param args.title - The new title for the conversation.
      * @param args.archived - Optional flag to archive/unarchive the conversation.
+     * @param args.silent - Change the title without posting the "changed the title" message, so
+     * the conversation isn't marked unread, moved up or unarchived, and nobody gets a push or
+     * email. Defaults to `false`.
      * @returns The updated conversation object.
      *
      * @example
@@ -153,9 +156,13 @@ export class ConversationsClient extends BaseClient {
      * ```
      */
     updateConversation(args: UpdateConversationArgs): Promise<Conversation> {
-        const params: Record<string, unknown> = { id: args.id, title: args.title }
-        if (args.archived !== undefined) params.archived = args.archived
-        return this.simple('POST', 'update', params, this.conversationSchema)
+        const { id, title, archived, silent } = args
+        return this.simple(
+            'POST',
+            'update',
+            { id, title, archived, silent },
+            this.conversationSchema,
+        )
     }
 
     /**

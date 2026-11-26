@@ -247,6 +247,25 @@ describe('ThreadsClient — wire serialization', () => {
         },
     )
 
+    it('updateThread sends silent so a rename posts no "changed the title" comment', async () => {
+        let body: Record<string, unknown> | undefined
+        server.use(
+            http.post(`${BASE}/threads/update`, async ({ request }) => {
+                body = (await request.json()) as Record<string, unknown>
+                return HttpResponse.json({ ...THREAD_RESPONSE, title: 'Renamed' })
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        await api.threads.updateThread({
+            id: '7YpL3oZ4kZ9vP7Q1tR2sX3z',
+            title: 'Renamed',
+            silent: true,
+        })
+
+        expect(body).toEqual({ id: '7YpL3oZ4kZ9vP7Q1tR2sX3z', title: 'Renamed', silent: true })
+    })
+
     it('markRead sends the thread id as thread_id (not id) plus obj_index', async () => {
         let body: Record<string, unknown> | undefined
         server.use(
