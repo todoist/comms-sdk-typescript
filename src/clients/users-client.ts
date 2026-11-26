@@ -321,7 +321,7 @@ export class UsersClient extends BaseClient {
      */
     heartbeat(args: { workspaceId: number; platform: string }): Promise<void> {
         return request({
-            httpMethod: 'GET',
+            httpMethod: 'POST',
             baseUri: this.getBaseUri(),
             relativePath: `${ENDPOINT_USERS}/heartbeat`,
             apiToken: this.apiToken,

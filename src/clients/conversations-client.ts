@@ -128,7 +128,7 @@ export class ConversationsClient extends BaseClient {
      */
     getOrCreateConversation(args: GetOrCreateConversationArgs): Promise<Conversation> {
         return this.simple(
-            'GET',
+            'POST',
             'get_or_create',
             { ...args, id: resolveCreateId(args.id) },
             this.conversationSchema,
@@ -188,7 +188,7 @@ export class ConversationsClient extends BaseClient {
      * @returns The updated conversation object.
      */
     addUser(args: AddConversationUserArgs): Promise<Conversation> {
-        return this.simple('POST', 'add_user', { ...args }, this.conversationSchema)
+        return this.addUsers({ id: args.id, userIds: [args.userId] })
     }
 
     /**
@@ -217,7 +217,7 @@ export class ConversationsClient extends BaseClient {
      * @returns The updated conversation object.
      */
     removeUser(args: RemoveConversationUserArgs): Promise<Conversation> {
-        return this.simple('POST', 'remove_user', { ...args }, this.conversationSchema)
+        return this.removeUsers({ id: args.id, userIds: [args.userId] })
     }
 
     /**
@@ -273,7 +273,7 @@ export class ConversationsClient extends BaseClient {
      * @param workspaceId - The workspace ID.
      */
     clearUnread(workspaceId: number): Promise<StatusOk> {
-        return this.simple('GET', 'clear_unread', { workspaceId }, StatusOkSchema)
+        return this.simple('POST', 'clear_unread', { workspaceId }, StatusOkSchema)
     }
 
     /**
@@ -291,7 +291,7 @@ export class ConversationsClient extends BaseClient {
      * ```
      */
     muteConversation(args: MuteConversationArgs): Promise<Conversation> {
-        return this.simple('GET', 'mute', { ...args }, this.conversationSchema)
+        return this.simple('POST', 'mute', { ...args }, this.conversationSchema)
     }
 
     /**
@@ -301,7 +301,7 @@ export class ConversationsClient extends BaseClient {
      * @returns The updated conversation object.
      */
     unmuteConversation(id: string): Promise<Conversation> {
-        return this.simple('GET', 'unmute', { id }, this.conversationSchema)
+        return this.simple('POST', 'unmute', { id }, this.conversationSchema)
     }
 
     private simple<T>(

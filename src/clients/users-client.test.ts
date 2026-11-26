@@ -294,3 +294,25 @@ describe('UsersClient update', () => {
         expect(body).toEqual({ timezone: 'Europe/London' })
     })
 })
+
+describe('UsersClient heartbeat', () => {
+    it('sends POST, the only method the server takes', async () => {
+        let sent: { method: string; body: unknown } | undefined
+        server.use(
+            http.all(apiUrl('api/v1.0/users/heartbeat'), async ({ request }) => {
+                sent = {
+                    method: request.method,
+                    body: request.method === 'POST' ? await request.json() : null,
+                }
+                return HttpResponse.json({ status: 'ok' })
+            }),
+        )
+
+        await new UsersClient({ apiToken: TEST_API_TOKEN }).heartbeat({
+            workspaceId: 1,
+            platform: 'api',
+        })
+
+        expect(sent).toEqual({ method: 'POST', body: { workspace_id: 1, platform: 'api' } })
+    })
+})
