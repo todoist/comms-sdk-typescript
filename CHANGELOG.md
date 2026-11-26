@@ -1,3 +1,9 @@
+## [6.2.0](https://github.com/todoist/comms-sdk-typescript/compare/v6.1.0...v6.2.0) (2026-11-26)
+
+### Features
+
+* pin and unpin comments and chat messages ([#158](https://github.com/todoist/comms-sdk-typescript/issues/158)) ([fa2dc58](https://github.com/todoist/comms-sdk-typescript/commit/fa2dc58f1e4aac2de9ee80a3c1a59dd448bcde87))
+
 ## [6.1.0](https://github.com/todoist/comms-sdk-typescript/compare/v6.0.0...v6.1.0) (2026-11-26)
 
 ### Features
