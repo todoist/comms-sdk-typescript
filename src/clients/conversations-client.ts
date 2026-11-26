@@ -188,6 +188,7 @@ export class ConversationsClient extends BaseClient {
      * @returns The updated conversation object.
      */
     addUser(args: AddConversationUserArgs): Promise<Conversation> {
+        // The server has only the plural `add_users` route; there is no `add_user`.
         return this.addUsers({ id: args.id, userIds: [args.userId] })
     }
 
@@ -217,6 +218,7 @@ export class ConversationsClient extends BaseClient {
      * @returns The updated conversation object.
      */
     removeUser(args: RemoveConversationUserArgs): Promise<Conversation> {
+        // The server has only the plural `remove_users` route; there is no `remove_user`.
         return this.removeUsers({ id: args.id, userIds: [args.userId] })
     }
 

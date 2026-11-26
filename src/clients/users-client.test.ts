@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CommsApi } from '../comms-api'
-import { apiUrl } from '../testUtils/msw-handlers'
+import { apiUrl, captureRequest } from '../testUtils/msw-handlers'
 import { server } from '../testUtils/msw-setup'
 import { mockUser, TEST_API_TOKEN } from '../testUtils/test-defaults'
 import { UsersClient } from './users-client'
@@ -297,16 +297,7 @@ describe('UsersClient update', () => {
 
 describe('UsersClient heartbeat', () => {
     it('sends POST, the only method the server takes', async () => {
-        let sent: { method: string; body: unknown } | undefined
-        server.use(
-            http.all(apiUrl('api/v1.0/users/heartbeat'), async ({ request }) => {
-                sent = {
-                    method: request.method,
-                    body: request.method === 'POST' ? await request.json() : null,
-                }
-                return HttpResponse.json({ status: 'ok' })
-            }),
-        )
+        const sent = captureRequest(apiUrl('api/v1.0/users/heartbeat'), { status: 'ok' })
 
         await new UsersClient({ apiToken: TEST_API_TOKEN }).heartbeat({
             workspaceId: 1,

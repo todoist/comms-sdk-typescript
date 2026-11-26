@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 
 import { CommsApi } from '../comms-api'
+import { captureRequest } from '../testUtils/msw-handlers'
 import { server } from '../testUtils/msw-setup'
 import {
     TEST_API_BASE_URL as BASE,
@@ -178,7 +179,6 @@ describe('ConversationsClient — routes the server takes only as POST', () => {
             (api) => api.conversations.unmuteConversation(ID),
             { id: ID },
         ],
-        // The server has only the plural routes, so the single-user calls go through them.
         [
             'addUser',
             'add_users',
@@ -196,16 +196,10 @@ describe('ConversationsClient — routes the server takes only as POST', () => {
     it.each(cases)(
         '%s sends POST with its arguments in the body',
         async (_, suffix, call, body) => {
-            let sent: { method: string; body: unknown } | undefined
-            server.use(
-                http.all(`${BASE}/conversations/${suffix}`, async ({ request }) => {
-                    sent = {
-                        method: request.method,
-                        body: request.method === 'POST' ? await request.json() : null,
-                    }
-                    return HttpResponse.json({ ...CONVERSATION_RESPONSE, status: 'ok' })
-                }),
-            )
+            const sent = captureRequest(`${BASE}/conversations/${suffix}`, {
+                ...CONVERSATION_RESPONSE,
+                status: 'ok',
+            })
 
             await call(new CommsApi(TEST_API_TOKEN))
 
