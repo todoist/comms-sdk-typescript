@@ -1,3 +1,9 @@
+## [6.2.1](https://github.com/todoist/comms-sdk-typescript/compare/v6.2.0...v6.2.1) (2026-11-26)
+
+### Bug Fixes
+
+* make 13 broken thread, chat and user calls reach the server ([#159](https://github.com/todoist/comms-sdk-typescript/issues/159)) ([47dd1d6](https://github.com/todoist/comms-sdk-typescript/commit/47dd1d6f7dd695a43e7203d5955d1c46e1dbd1f6))
+
 ## [6.2.0](https://github.com/todoist/comms-sdk-typescript/compare/v6.1.0...v6.2.0) (2026-11-26)
 
 ### Features
