@@ -1,3 +1,9 @@
+## [6.1.0](https://github.com/todoist/comms-sdk-typescript/compare/v6.0.0...v6.1.0) (2026-11-26)
+
+### Features
+
+* let thread and conversation renames skip the title message ([#157](https://github.com/todoist/comms-sdk-typescript/issues/157)) ([f3d5527](https://github.com/todoist/comms-sdk-typescript/commit/f3d55270fce1268f5bcaf82ad304b2c28611cfa0))
+
 ## [6.0.0](https://github.com/todoist/comms-sdk-typescript/compare/v5.3.0...v6.0.0) (2026-11-18)
 
 ### ⚠ BREAKING CHANGES
