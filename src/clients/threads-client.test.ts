@@ -266,6 +266,24 @@ describe('ThreadsClient — wire serialization', () => {
         expect(body).toEqual({ id: '7YpL3oZ4kZ9vP7Q1tR2sX3z', title: 'Renamed', silent: true })
     })
 
+    it.each([
+        ['pinThread', 'pin'],
+        ['unpinThread', 'unpin'],
+    ] as const)('%s POSTs the thread id', async (method, suffix) => {
+        let body: unknown
+        server.use(
+            http.post(`${BASE}/threads/${suffix}`, async ({ request }) => {
+                body = await request.json()
+                return HttpResponse.json({ status: 'ok', thread: THREAD_RESPONSE })
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        await api.threads[method]('7YpL3oZ4kZ9vP7Q1tR2sX3z')
+
+        expect(body).toEqual({ id: '7YpL3oZ4kZ9vP7Q1tR2sX3z' })
+    })
+
     it('markRead sends the thread id as thread_id (not id) plus obj_index', async () => {
         let body: Record<string, unknown> | undefined
         server.use(
@@ -300,5 +318,38 @@ describe('ThreadsClient — wire serialization', () => {
         expect(body?.thread_id).toBe('7YpL3oZ4kZ9vP7Q1tR2sX3z')
         expect(body).not.toHaveProperty('id')
         expect(body?.obj_index).toBe(-1)
+    })
+})
+
+describe('ThreadsClient — pins on the last comment', () => {
+    it('getThread keeps who pinned its last comment and when', async () => {
+        server.use(
+            http.get(`${BASE}/threads/getone`, () =>
+                HttpResponse.json({
+                    ...THREAD_RESPONSE,
+                    last_comment: {
+                        id: '7YpL3oZ4kZ9vP7Q1tR2sX41',
+                        content: 'Pinned',
+                        creator: 1,
+                        creator_name: 'Ana',
+                        thread_id: THREAD_RESPONSE.id,
+                        channel_id: TEST_CHANNEL_ID,
+                        posted_ts: 1_609_459_200,
+                        obj_index: 1,
+                        deleted: false,
+                        version: 1,
+                        workspace_id: 1,
+                        pinned_ts: 1_700_000_000,
+                        pinned_by: 2,
+                    },
+                }),
+            ),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        const thread = await api.threads.getThread(THREAD_RESPONSE.id)
+
+        expect(thread.lastComment?.pinnedDate).toEqual(new Date('2023-11-14T22:13:20Z'))
+        expect(thread.lastComment?.pinnedBy).toBe(2)
     })
 })

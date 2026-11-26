@@ -116,3 +116,30 @@ describe('ConversationsClient — wire serialization', () => {
         expect(conversation.archived).toBe(archived)
     })
 })
+
+describe('ConversationsClient — pins on the last message', () => {
+    it('getConversation keeps who pinned its last message and when', async () => {
+        server.use(
+            http.get(`${BASE}/conversations/getone`, () =>
+                HttpResponse.json({
+                    ...CONVERSATION_RESPONSE,
+                    last_message: {
+                        id: '7YpL3oZ4kZ9vP7Q1tR2sX43',
+                        content: 'Pinned',
+                        creator: 1,
+                        conversation_id: TEST_CONVERSATION_ID,
+                        posted_ts: 1_609_459_200,
+                        pinned_ts: 1_700_000_000,
+                        pinned_by: 2,
+                    },
+                }),
+            ),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        const conversation = await api.conversations.getConversation(TEST_CONVERSATION_ID)
+
+        expect(conversation.lastMessage?.pinnedDate).toEqual(new Date('2023-11-14T22:13:20Z'))
+        expect(conversation.lastMessage?.pinnedBy).toBe(2)
+    })
+})

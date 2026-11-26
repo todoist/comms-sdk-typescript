@@ -197,7 +197,7 @@ export class ThreadsClient extends BaseClient {
      * @param id - The thread ID.
      */
     pinThread(id: string): Promise<StatusOk> {
-        return this.simple('GET', 'pin', { id }, StatusOkSchema)
+        return this.simple('POST', 'pin', { id }, StatusOkSchema)
     }
 
     /**
@@ -206,7 +206,7 @@ export class ThreadsClient extends BaseClient {
      * @param id - The thread ID.
      */
     unpinThread(id: string): Promise<StatusOk> {
-        return this.simple('GET', 'unpin', { id }, StatusOkSchema)
+        return this.simple('POST', 'unpin', { id }, StatusOkSchema)
     }
 
     /**

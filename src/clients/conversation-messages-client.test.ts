@@ -169,3 +169,58 @@ describe('ConversationMessagesClient — deleteMessage', () => {
         )
     })
 })
+
+describe('ConversationMessagesClient — pins', () => {
+    it.each([
+        ['pinMessage', 'pin', 1_700_000_000, new Date('2023-11-14T22:13:20Z'), 2],
+        ['unpinMessage', 'unpin', null, null, null],
+    ] as const)(
+        '%s POSTs the message id and returns who pinned it and when',
+        async (method, suffix, pinnedTs, pinnedDate, pinnedBy) => {
+            let body: unknown
+            server.use(
+                http.post(`${BASE}/conversation_messages/${suffix}`, async ({ request }) => {
+                    body = await request.json()
+                    return HttpResponse.json({
+                        ...MESSAGE_RESPONSE,
+                        id: TEST_MESSAGE_ID,
+                        pinned_ts: pinnedTs,
+                        pinned_by: pinnedBy,
+                    })
+                }),
+            )
+
+            const api = new CommsApi(TEST_API_TOKEN)
+            const message = await api.conversationMessages[method](TEST_MESSAGE_ID)
+
+            expect(body).toEqual({ id: TEST_MESSAGE_ID })
+            expect(message.pinnedDate).toEqual(pinnedDate)
+            expect(message.pinnedBy).toBe(pinnedBy)
+        },
+    )
+
+    it('getPinnedMessages sends conversation_id and returns the pinned messages', async () => {
+        let params: URLSearchParams | undefined
+        server.use(
+            http.get(`${BASE}/conversation_messages/get_pinned`, ({ request }) => {
+                params = new URL(request.url).searchParams
+                return HttpResponse.json([
+                    {
+                        ...MESSAGE_RESPONSE,
+                        id: TEST_MESSAGE_ID,
+                        pinned_ts: 1_700_000_000,
+                        pinned_by: 2,
+                    },
+                ])
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        const messages = await api.conversationMessages.getPinnedMessages(TEST_CONVERSATION_ID)
+
+        expect(params?.get('conversation_id')).toBe(TEST_CONVERSATION_ID)
+        expect(messages.map((message) => [message.id, message.pinnedBy])).toEqual([
+            [TEST_MESSAGE_ID, 2],
+        ])
+    })
+})
