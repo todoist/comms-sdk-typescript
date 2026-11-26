@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { CommsApi } from '../comms-api'
+import { captureRequest } from '../testUtils/msw-handlers'
 import { server } from '../testUtils/msw-setup'
 import {
     TEST_API_BASE_URL as BASE,
@@ -352,4 +353,40 @@ describe('ThreadsClient — pins on the last comment', () => {
         expect(thread.lastComment?.pinnedDate).toEqual(new Date('2023-11-14T22:13:20Z'))
         expect(thread.lastComment?.pinnedBy).toBe(2)
     })
+})
+
+describe('ThreadsClient — routes the server takes only as POST', () => {
+    const THREAD_ID = THREAD_RESPONSE.id
+    const cases: [string, string, (api: CommsApi) => Promise<unknown>, object][] = [
+        ['saveThread', 'save', (api) => api.threads.saveThread(THREAD_ID), { id: THREAD_ID }],
+        ['unsaveThread', 'unsave', (api) => api.threads.unsaveThread(THREAD_ID), { id: THREAD_ID }],
+        [
+            'moveToChannel',
+            'move_to_channel',
+            (api) => api.threads.moveToChannel({ id: THREAD_ID, toChannel: TEST_CHANNEL_ID }),
+            { id: THREAD_ID, to_channel: TEST_CHANNEL_ID },
+        ],
+        ['clearUnread', 'clear_unread', (api) => api.threads.clearUnread(1), { workspace_id: 1 }],
+        [
+            'muteThread',
+            'mute',
+            (api) => api.threads.muteThread({ id: THREAD_ID, minutes: 60 }),
+            { id: THREAD_ID, minutes: 60 },
+        ],
+        ['unmuteThread', 'unmute', (api) => api.threads.unmuteThread(THREAD_ID), { id: THREAD_ID }],
+    ]
+
+    it.each(cases)(
+        '%s sends POST with its arguments in the body',
+        async (_, suffix, call, body) => {
+            const sent = captureRequest(`${BASE}/threads/${suffix}`, {
+                ...THREAD_RESPONSE,
+                status: 'ok',
+            })
+
+            await call(new CommsApi(TEST_API_TOKEN))
+
+            expect(sent).toEqual({ method: 'POST', body })
+        },
+    )
 })

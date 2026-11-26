@@ -179,7 +179,7 @@ export class ThreadsClient extends BaseClient {
      * @param id - The thread ID.
      */
     saveThread(id: string): Promise<StatusOk> {
-        return this.simple('GET', 'save', { id }, StatusOkSchema)
+        return this.simple('POST', 'save', { id }, StatusOkSchema)
     }
 
     /**
@@ -188,7 +188,7 @@ export class ThreadsClient extends BaseClient {
      * @param id - The thread ID.
      */
     unsaveThread(id: string): Promise<StatusOk> {
-        return this.simple('GET', 'unsave', { id }, StatusOkSchema)
+        return this.simple('POST', 'unsave', { id }, StatusOkSchema)
     }
 
     /**
@@ -218,7 +218,7 @@ export class ThreadsClient extends BaseClient {
      * @returns The updated thread object.
      */
     moveToChannel(args: MoveThreadToChannelArgs): Promise<Thread> {
-        return this.simple('GET', 'move_to_channel', { ...args }, this.threadSchema)
+        return this.simple('POST', 'move_to_channel', { ...args }, this.threadSchema)
     }
 
     /**
@@ -286,7 +286,7 @@ export class ThreadsClient extends BaseClient {
      * @param workspaceId - The workspace ID.
      */
     clearUnread(workspaceId: number): Promise<StatusOk> {
-        return this.simple('GET', 'clear_unread', { workspaceId }, StatusOkSchema)
+        return this.simple('POST', 'clear_unread', { workspaceId }, StatusOkSchema)
     }
 
     /**
@@ -319,7 +319,7 @@ export class ThreadsClient extends BaseClient {
      * ```
      */
     muteThread(args: MuteThreadArgs): Promise<Thread> {
-        return this.simple('GET', 'mute', { ...args }, this.threadSchema)
+        return this.simple('POST', 'mute', { ...args }, this.threadSchema)
     }
 
     /**
@@ -330,7 +330,7 @@ export class ThreadsClient extends BaseClient {
      * @returns The updated thread object.
      */
     unmuteThread(id: string): Promise<Thread> {
-        return this.simple('GET', 'unmute', { id }, this.threadSchema)
+        return this.simple('POST', 'unmute', { id }, this.threadSchema)
     }
 
     /**

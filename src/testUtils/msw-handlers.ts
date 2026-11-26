@@ -1,4 +1,5 @@
 import { HttpResponse, http } from 'msw'
+import { server } from './msw-setup'
 
 const BASE_URL = 'https://comms.todoist.com'
 
@@ -55,3 +56,20 @@ export function createPostHandler(endpoint: string, responseData: JsonValue) {
  * Export http from msw for custom handlers
  */
 export { http, HttpResponse }
+
+/**
+ * Answers `url` with `response` and records the method and JSON body the
+ * client sent. It answers every method, so a request sent with the wrong one
+ * is recorded instead of going unhandled.
+ */
+export function captureRequest(url: string, response: Parameters<typeof HttpResponse.json>[0]) {
+    const sent: { method?: string; body?: unknown } = {}
+    server.use(
+        http.all(url, async ({ request }) => {
+            sent.method = request.method
+            sent.body = request.method === 'POST' ? await request.json() : null
+            return HttpResponse.json(response)
+        }),
+    )
+    return sent
+}

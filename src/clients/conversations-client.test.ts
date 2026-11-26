@@ -2,12 +2,14 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 
 import { CommsApi } from '../comms-api'
+import { captureRequest } from '../testUtils/msw-handlers'
 import { server } from '../testUtils/msw-setup'
 import {
     TEST_API_BASE_URL as BASE,
     TEST_API_TOKEN,
     TEST_CONVERSATION_ID,
 } from '../testUtils/test-defaults'
+import { generateId } from '../utils/uuidv7'
 
 const CONVERSATION_RESPONSE = {
     id: TEST_CONVERSATION_ID,
@@ -142,4 +144,66 @@ describe('ConversationsClient — pins on the last message', () => {
         expect(conversation.lastMessage?.pinnedDate).toEqual(new Date('2023-11-14T22:13:20Z'))
         expect(conversation.lastMessage?.pinnedBy).toBe(2)
     })
+})
+
+describe('ConversationsClient — routes the server takes only as POST', () => {
+    const ID = TEST_CONVERSATION_ID
+    const NEW_ID = generateId()
+    const cases: [string, string, (api: CommsApi) => Promise<unknown>, object][] = [
+        [
+            'getOrCreateConversation',
+            'get_or_create',
+            (api) =>
+                api.conversations.getOrCreateConversation({
+                    id: NEW_ID,
+                    workspaceId: 1,
+                    userIds: [1, 2],
+                }),
+            { id: NEW_ID, workspace_id: 1, user_ids: [1, 2] },
+        ],
+        [
+            'clearUnread',
+            'clear_unread',
+            (api) => api.conversations.clearUnread(1),
+            { workspace_id: 1 },
+        ],
+        [
+            'muteConversation',
+            'mute',
+            (api) => api.conversations.muteConversation({ id: ID, minutes: 60 }),
+            { id: ID, minutes: 60 },
+        ],
+        [
+            'unmuteConversation',
+            'unmute',
+            (api) => api.conversations.unmuteConversation(ID),
+            { id: ID },
+        ],
+        [
+            'addUser',
+            'add_users',
+            (api) => api.conversations.addUser({ id: ID, userId: 2 }),
+            { id: ID, user_ids: [2] },
+        ],
+        [
+            'removeUser',
+            'remove_users',
+            (api) => api.conversations.removeUser({ id: ID, userId: 2 }),
+            { id: ID, user_ids: [2] },
+        ],
+    ]
+
+    it.each(cases)(
+        '%s sends POST with its arguments in the body',
+        async (_, suffix, call, body) => {
+            const sent = captureRequest(`${BASE}/conversations/${suffix}`, {
+                ...CONVERSATION_RESPONSE,
+                status: 'ok',
+            })
+
+            await call(new CommsApi(TEST_API_TOKEN))
+
+            expect(sent).toEqual({ method: 'POST', body })
+        },
+    )
 })
