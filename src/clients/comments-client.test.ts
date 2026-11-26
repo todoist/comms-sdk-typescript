@@ -271,3 +271,63 @@ describe('CommentsClient — deleteComment', () => {
         })
     })
 })
+
+describe('CommentsClient — pins', () => {
+    const COMMENT_RESPONSE = {
+        id: TEST_COMMENT_ID,
+        thread_id: TEST_THREAD_ID,
+        channel_id: TEST_CHANNEL_ID,
+        creator: 1,
+        content: 'hello',
+        posted_ts: 1_609_459_200,
+        workspace_id: 1,
+        system_message: null,
+    }
+
+    it.each([
+        ['pinComment', 'pin', 1_700_000_000, 2],
+        ['unpinComment', 'unpin', null, null],
+    ] as const)(
+        '%s POSTs the comment id and returns who pinned it and when',
+        async (method, suffix, pinnedTs, pinnedBy) => {
+            let body: unknown
+            server.use(
+                http.post(`${BASE}/comments/${suffix}`, async ({ request }) => {
+                    body = await request.json()
+                    return HttpResponse.json({
+                        ...COMMENT_RESPONSE,
+                        pinned_ts: pinnedTs,
+                        pinned_by: pinnedBy,
+                    })
+                }),
+            )
+
+            const api = new CommsApi(TEST_API_TOKEN)
+            const comment = await api.comments[method](TEST_COMMENT_ID)
+
+            expect(body).toEqual({ id: TEST_COMMENT_ID })
+            expect(comment.pinnedDate).toEqual(pinnedTs && new Date(pinnedTs * 1000))
+            expect(comment.pinnedBy).toBe(pinnedBy)
+        },
+    )
+
+    it('getPinnedComments sends thread_id and returns the pinned comments', async () => {
+        let params: URLSearchParams | undefined
+        server.use(
+            http.get(`${BASE}/comments/get_pinned`, ({ request }) => {
+                params = new URL(request.url).searchParams
+                return HttpResponse.json([
+                    { ...COMMENT_RESPONSE, pinned_ts: 1_700_000_000, pinned_by: 2 },
+                ])
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        const comments = await api.comments.getPinnedComments(TEST_THREAD_ID)
+
+        expect(params?.get('thread_id')).toBe(TEST_THREAD_ID)
+        expect(comments.map((comment) => [comment.id, comment.pinnedBy])).toEqual([
+            [TEST_COMMENT_ID, 2],
+        ])
+    })
+})

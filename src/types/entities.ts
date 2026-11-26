@@ -358,6 +358,8 @@ export const CommentObjectSchema = z.object({
     toEmails: z.array(z.string()).nullable().optional(),
     deleted: z.boolean().nullable().optional(),
     deletedBy: z.number().nullable().optional(),
+    pinnedDate: z.date().nullable().optional(),
+    pinnedBy: z.number().nullable().optional(),
     version: z.number().nullable().optional(),
     actions: z.array(z.unknown()).nullable().optional(),
 })
@@ -451,6 +453,8 @@ export const ConversationMessageObjectSchema = z.object({
     objIndex: z.number().nullable().optional(),
     lastEdited: z.date().nullable().optional(),
     isDeleted: z.boolean().nullable().optional(),
+    pinnedDate: z.date().nullable().optional(),
+    pinnedBy: z.number().nullable().optional(),
     directGroupMentions: z.array(z.string()).nullable().optional(),
     directMentions: z.array(z.number()).nullable().optional(),
     version: z.number().nullable().optional(),

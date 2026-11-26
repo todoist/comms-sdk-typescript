@@ -161,6 +161,42 @@ export class ConversationMessagesClient extends BaseClient {
         return this.simple('POST', 'remove', { id })
     }
 
+    /**
+     * Pins a message to the top of its conversation, for everyone in it.
+     *
+     * @param id - The message ID.
+     * @returns The message, with `pinnedDate` and `pinnedBy` set.
+     */
+    pinMessage(id: string): Promise<ConversationMessage> {
+        return this.simple('POST', 'pin', { id }, this.messageSchema)
+    }
+
+    /**
+     * Unpins a message.
+     *
+     * @param id - The message ID.
+     * @returns The message, with `pinnedDate` and `pinnedBy` cleared.
+     */
+    unpinMessage(id: string): Promise<ConversationMessage> {
+        return this.simple('POST', 'unpin', { id }, this.messageSchema)
+    }
+
+    /**
+     * Gets a conversation's pinned messages.
+     *
+     * @param conversationId - The conversation ID.
+     * @returns The pinned messages.
+     *
+     * @example
+     * ```typescript
+     * const pinned = await api.conversationMessages.getPinnedMessages('7YpL3oZ4kZ9vP7Q1tR2sX42')
+     * pinned.forEach(m => console.log(m.pinnedDate, m.content))
+     * ```
+     */
+    getPinnedMessages(conversationId: string): Promise<ConversationMessage[]> {
+        return this.simple('GET', 'get_pinned', { conversationId }, this.messageListSchema)
+    }
+
     private simple(
         httpMethod: 'GET' | 'POST',
         suffix: string,

@@ -199,4 +199,57 @@ export class CommentsClient extends BaseClient {
             customFetch: this.customFetch,
         }).then((response) => StatusOkSchema.parse(response.data))
     }
+
+    /**
+     * Pins a comment to the top of its thread, for everyone in it.
+     *
+     * @param id - The comment ID.
+     * @returns The comment, with `pinnedDate` and `pinnedBy` set.
+     */
+    pinComment(id: string): Promise<Comment> {
+        return this.simple('POST', 'pin', { id }, this.commentSchema)
+    }
+
+    /**
+     * Unpins a comment.
+     *
+     * @param id - The comment ID.
+     * @returns The comment, with `pinnedDate` and `pinnedBy` cleared.
+     */
+    unpinComment(id: string): Promise<Comment> {
+        return this.simple('POST', 'unpin', { id }, this.commentSchema)
+    }
+
+    /**
+     * Gets a thread's pinned comments.
+     *
+     * @param threadId - The thread ID.
+     * @returns The pinned comments.
+     *
+     * @example
+     * ```typescript
+     * const pinned = await api.comments.getPinnedComments('7YpL3oZ4kZ9vP7Q1tR2sX3z')
+     * pinned.forEach(c => console.log(c.pinnedDate, c.content))
+     * ```
+     */
+    getPinnedComments(threadId: string): Promise<Comment[]> {
+        return this.simple('GET', 'get_pinned', { threadId }, this.commentListSchema)
+    }
+
+    private simple<T>(
+        httpMethod: 'GET' | 'POST',
+        suffix: string,
+        params: Record<string, unknown>,
+        schema: z.ZodType<T>,
+    ): Promise<T> {
+        return request<T>({
+            httpMethod,
+            baseUri: this.getBaseUri(),
+            relativePath: `${ENDPOINT_COMMENTS}/${suffix}`,
+            apiToken: this.apiToken,
+            payload: params,
+            headers: this.headers,
+            customFetch: this.customFetch,
+        }).then((response) => schema.parse(response.data))
+    }
 }

@@ -266,6 +266,24 @@ describe('ThreadsClient — wire serialization', () => {
         expect(body).toEqual({ id: '7YpL3oZ4kZ9vP7Q1tR2sX3z', title: 'Renamed', silent: true })
     })
 
+    it.each([
+        ['pinThread', 'pin'],
+        ['unpinThread', 'unpin'],
+    ] as const)('%s POSTs the thread id', async (method, suffix) => {
+        let body: unknown
+        server.use(
+            http.post(`${BASE}/threads/${suffix}`, async ({ request }) => {
+                body = await request.json()
+                return HttpResponse.json({ status: 'ok', thread: THREAD_RESPONSE })
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        await api.threads[method]('7YpL3oZ4kZ9vP7Q1tR2sX3z')
+
+        expect(body).toEqual({ id: '7YpL3oZ4kZ9vP7Q1tR2sX3z' })
+    })
+
     it('markRead sends the thread id as thread_id (not id) plus obj_index', async () => {
         let body: Record<string, unknown> | undefined
         server.use(
