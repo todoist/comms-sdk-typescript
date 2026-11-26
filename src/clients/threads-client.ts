@@ -156,6 +156,8 @@ export class ThreadsClient extends BaseClient {
      * @param args.id - The thread ID.
      * @param args.title - Optional new thread title.
      * @param args.content - Optional new thread content.
+     * @param args.silent - Change the title without posting the "changed the title" comment, so
+     * the thread isn't marked unread or moved up. Defaults to `false`.
      * @returns The updated thread object.
      */
     updateThread(args: UpdateThreadArgs): Promise<Thread> {

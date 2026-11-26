@@ -59,6 +59,7 @@ export const UpdateThreadArgsSchema = z.object({
     id: z.string(),
     title: z.string().nullable().optional(),
     content: z.string().nullable().optional(),
+    silent: z.boolean().optional(),
 })
 
 export type UpdateThreadArgs = z.infer<typeof UpdateThreadArgsSchema>
@@ -453,6 +454,7 @@ export type UpdateConversationArgs = {
     id: string
     title: string
     archived?: boolean
+    silent?: boolean
 }
 
 export type AddConversationUserArgs = {

@@ -76,6 +76,28 @@ describe('ConversationsClient — wire serialization', () => {
     })
 
     it.each([
+        ['only the fields it is given', {}],
+        ['archived and silent when set', { archived: true, silent: true }],
+    ] as const)('updateConversation sends %s', async (_, extra) => {
+        let body: Record<string, unknown> | undefined
+        server.use(
+            http.post(`${BASE}/conversations/update`, async ({ request }) => {
+                body = (await request.json()) as Record<string, unknown>
+                return HttpResponse.json({ ...CONVERSATION_RESPONSE, title: 'Renamed' })
+            }),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        await api.conversations.updateConversation({
+            id: TEST_CONVERSATION_ID,
+            title: 'Renamed',
+            ...extra,
+        })
+
+        expect(body).toEqual({ id: TEST_CONVERSATION_ID, title: 'Renamed', ...extra })
+    })
+
+    it.each([
         ['archiveConversation', 'archive', true],
         ['unarchiveConversation', 'unarchive', false],
     ] as const)('%s posts the conversation id', async (method, suffix, archived) => {
