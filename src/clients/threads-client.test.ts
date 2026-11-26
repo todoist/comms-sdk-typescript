@@ -320,3 +320,36 @@ describe('ThreadsClient — wire serialization', () => {
         expect(body?.obj_index).toBe(-1)
     })
 })
+
+describe('ThreadsClient — pins on the last comment', () => {
+    it('getThread keeps who pinned its last comment and when', async () => {
+        server.use(
+            http.get(`${BASE}/threads/getone`, () =>
+                HttpResponse.json({
+                    ...THREAD_RESPONSE,
+                    last_comment: {
+                        id: '7YpL3oZ4kZ9vP7Q1tR2sX41',
+                        content: 'Pinned',
+                        creator: 1,
+                        creator_name: 'Ana',
+                        thread_id: THREAD_RESPONSE.id,
+                        channel_id: TEST_CHANNEL_ID,
+                        posted_ts: 1_609_459_200,
+                        obj_index: 1,
+                        deleted: false,
+                        version: 1,
+                        workspace_id: 1,
+                        pinned_ts: 1_700_000_000,
+                        pinned_by: 2,
+                    },
+                }),
+            ),
+        )
+
+        const api = new CommsApi(TEST_API_TOKEN)
+        const thread = await api.threads.getThread(THREAD_RESPONSE.id)
+
+        expect(thread.lastComment?.pinnedDate).toEqual(new Date('2023-11-14T22:13:20Z'))
+        expect(thread.lastComment?.pinnedBy).toBe(2)
+    })
+})

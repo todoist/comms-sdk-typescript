@@ -172,11 +172,11 @@ describe('ConversationMessagesClient — deleteMessage', () => {
 
 describe('ConversationMessagesClient — pins', () => {
     it.each([
-        ['pinMessage', 'pin', 1_700_000_000, 2],
-        ['unpinMessage', 'unpin', null, null],
+        ['pinMessage', 'pin', 1_700_000_000, new Date('2023-11-14T22:13:20Z'), 2],
+        ['unpinMessage', 'unpin', null, null, null],
     ] as const)(
         '%s POSTs the message id and returns who pinned it and when',
-        async (method, suffix, pinnedTs, pinnedBy) => {
+        async (method, suffix, pinnedTs, pinnedDate, pinnedBy) => {
             let body: unknown
             server.use(
                 http.post(`${BASE}/conversation_messages/${suffix}`, async ({ request }) => {
@@ -194,7 +194,7 @@ describe('ConversationMessagesClient — pins', () => {
             const message = await api.conversationMessages[method](TEST_MESSAGE_ID)
 
             expect(body).toEqual({ id: TEST_MESSAGE_ID })
-            expect(message.pinnedDate).toEqual(pinnedTs && new Date(pinnedTs * 1000))
+            expect(message.pinnedDate).toEqual(pinnedDate)
             expect(message.pinnedBy).toBe(pinnedBy)
         },
     )

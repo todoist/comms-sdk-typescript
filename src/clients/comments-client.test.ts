@@ -285,11 +285,11 @@ describe('CommentsClient — pins', () => {
     }
 
     it.each([
-        ['pinComment', 'pin', 1_700_000_000, 2],
-        ['unpinComment', 'unpin', null, null],
+        ['pinComment', 'pin', 1_700_000_000, new Date('2023-11-14T22:13:20Z'), 2],
+        ['unpinComment', 'unpin', null, null, null],
     ] as const)(
         '%s POSTs the comment id and returns who pinned it and when',
-        async (method, suffix, pinnedTs, pinnedBy) => {
+        async (method, suffix, pinnedTs, pinnedDate, pinnedBy) => {
             let body: unknown
             server.use(
                 http.post(`${BASE}/comments/${suffix}`, async ({ request }) => {
@@ -306,7 +306,7 @@ describe('CommentsClient — pins', () => {
             const comment = await api.comments[method](TEST_COMMENT_ID)
 
             expect(body).toEqual({ id: TEST_COMMENT_ID })
-            expect(comment.pinnedDate).toEqual(pinnedTs && new Date(pinnedTs * 1000))
+            expect(comment.pinnedDate).toEqual(pinnedDate)
             expect(comment.pinnedBy).toBe(pinnedBy)
         },
     )
