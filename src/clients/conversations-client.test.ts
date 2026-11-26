@@ -75,7 +75,10 @@ describe('ConversationsClient — wire serialization', () => {
         expect(params.has('limit')).toBe(false)
     })
 
-    it('updateConversation sends silent so a rename posts no "changed the title" message', async () => {
+    it.each([
+        ['only the fields it is given', {}],
+        ['archived and silent when set', { archived: true, silent: true }],
+    ] as const)('updateConversation sends %s', async (_, extra) => {
         let body: Record<string, unknown> | undefined
         server.use(
             http.post(`${BASE}/conversations/update`, async ({ request }) => {
@@ -88,10 +91,10 @@ describe('ConversationsClient — wire serialization', () => {
         await api.conversations.updateConversation({
             id: TEST_CONVERSATION_ID,
             title: 'Renamed',
-            silent: true,
+            ...extra,
         })
 
-        expect(body).toEqual({ id: TEST_CONVERSATION_ID, title: 'Renamed', silent: true })
+        expect(body).toEqual({ id: TEST_CONVERSATION_ID, title: 'Renamed', ...extra })
     })
 
     it.each([

@@ -156,13 +156,7 @@ export class ConversationsClient extends BaseClient {
      * ```
      */
     updateConversation(args: UpdateConversationArgs): Promise<Conversation> {
-        const { id, title, archived, silent } = args
-        return this.simple(
-            'POST',
-            'update',
-            { id, title, archived, silent },
-            this.conversationSchema,
-        )
+        return this.simple('POST', 'update', { ...args }, this.conversationSchema)
     }
 
     /**
