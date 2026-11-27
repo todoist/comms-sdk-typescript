@@ -42,10 +42,13 @@ function getRequestConfiguration(
 ): RequestConfig {
     const authHeader = apiToken ? { Authorization: getAuthHeader(apiToken) } : undefined
     const requestIdHeader = requestId ? { 'X-Request-Id': requestId } : undefined
-    // Custom headers sit below auth and request id so they can never clobber them.
+    const formHeader = formEncoded ? { 'Content-Type': FORM_CONTENT_TYPE } : undefined
+    // Custom headers sit below the form content type, auth and request id so
+    // they can never clobber them.
     const headers = mergeHeaders(
-        { 'Content-Type': formEncoded ? FORM_CONTENT_TYPE : JSON_CONTENT_TYPE },
+        { 'Content-Type': JSON_CONTENT_TYPE },
         resolveCustomHeaders(customHeaders),
+        formHeader,
         authHeader,
         requestIdHeader,
     )
