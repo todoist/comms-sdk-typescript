@@ -30,6 +30,7 @@
         "clean": "rimraf dist",
         "test": "vitest run",
         "test:watch": "vitest",
+        "test:contract": "vitest run --config vitest.contract.config.ts",
         "test:coverage": "vitest run --coverage",
         "verify": "node .agents/scripts/verify.mjs",
         "review:worktree": "node .agents/scripts/review-worktree.ts",

@@ -1,10 +1,11 @@
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
         include: ['**/*.test.ts'],
+        exclude: [...configDefaults.exclude, '**/*.contract.test.ts'],
         setupFiles: ['./src/testUtils/msw-setup.ts'],
         coverage: {
             provider: 'v8',

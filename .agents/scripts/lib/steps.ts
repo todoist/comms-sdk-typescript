@@ -41,6 +41,8 @@ export const CI_EQUIVALENTS: { run: string; steps: string[] }[] = [
  * that every workflow running a command on pull requests is ci.yml or listed here.
  */
 export const UNRUN_WORKFLOWS: Record<string, string> = {
+    '.github/workflows/api-contract.yml':
+        "the API contract test (api-contract.yml): it reads production's live API spec, so a server change can fail it with no change here; run `npm run test:contract`",
     '.github/workflows/validate-docs.yml':
         'the docs site build (validate-docs.yml): it needs its own install and takes a minute or more; run `npm ci && npm run build` in website/',
 }
