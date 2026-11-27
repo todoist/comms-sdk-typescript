@@ -58,9 +58,9 @@ One command, every check a pull request's CI runs: lint, format, both type check
 - **Only CI files changed** (Renovate, `.github/` config other than workflows): it says no local check reads them, and checks their formatting. Every workflow counts as code, since a local test reads them all.
 - **Output:** one line per step. A failing step prints the last 30 lines of its log and the log's path under `.tmp/agents/logs/`.
 - **The record:** after a full pass it writes a hash of the tree to `.tmp/agents/verified.json`: the content of every file local checks read, and the names, not the content, of docs. CI-only files are left out. A run that fails, or sees files change while it runs, deletes it. The end-of-turn gate reads it.
-- **What it cannot see:** the real Comms API, Node versions other than yours, the packed package as consumers resolve it (`npm run attw`, which only the release runs) and the docs site build. It prints these after every pass.
+- **What it cannot see:** the real Comms API, Node versions other than yours, the packed package as consumers resolve it (`npm run attw`, which only the release runs), the docs site build and the API contract test. It prints these after every pass.
 
-The docs site build (`.github/workflows/validate-docs.yml`) is the one pull-request check verify leaves out: it needs its own `npm ci` in `website/` and takes over a minute from cold, several times the rest put together. Run `npm ci && npm run build` in `website/` when a change touches the docs site or the public API's doc comments.
+Verify leaves out two pull-request checks. The docs site build (`.github/workflows/validate-docs.yml`) needs its own `npm ci` in `website/` and takes over a minute from cold, several times the rest put together. Run `npm ci && npm run build` in `website/` when a change touches the docs site or the public API's doc comments. The API contract test (`.github/workflows/api-contract.yml`) reads production's live API spec, so a server change can fail it with no change here. Run `npm run test:contract` when a change touches what the SDK sends.
 
 If `ci.yml` gains a step, or another workflow starts running commands on pull requests, `.agents/scripts/lib/steps.test.ts` fails until verify accounts for it.
 

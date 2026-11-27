@@ -23,7 +23,7 @@ type Sent = { method: string; path: string; contentType?: string; fields: string
 
 // Where the SDK and the server disagree today. Fixing one fails the test
 // until its line here goes, and any new one fails it too, so this only shrinks.
-const KNOWN_PROBLEMS: { [K in CallName]?: string[] } = {
+const KNOWN_PROBLEMS: { [K in CallName | keyof typeof MORE_SHAPES]?: string[] } = {
     'users.getUser': ['GET users/getone: the server ignores "as_list"'],
     'workspaceUsers.getWorkspaceUsers': ['GET workspace_users/get: the server ignores "archived"'],
     'workspaceUsers.resendInvite': [
@@ -45,6 +45,9 @@ const KNOWN_PROBLEMS: { [K in CallName]?: string[] } = {
         'GET search: the server ignores "mention_self"',
         'GET search: the server ignores "date_from"',
         'GET search: the server ignores "date_to"',
+    ],
+    'search.search for mentions, with no text': [
+        'GET search: the server ignores "mention_self"',
         'GET search: the server requires "query"',
     ],
     'search.searchThread': [
@@ -114,7 +117,7 @@ type CallName = { [C in keyof Calls]: `${C}.${keyof Calls[C] & string}` }[keyof 
 
 // The arguments each SDK method is called with. The type makes optional fields
 // required, so a new method or a new option fails the type check until it's
-// listed here, and every field the SDK can send gets checked.
+// listed here, and every top-level field the SDK sends gets checked.
 const CALLS: Calls = {
     users: {
         register: [
@@ -464,36 +467,34 @@ const CALLS: Calls = {
 }
 
 // Calls that take one of several shapes. CALLS fills in every field, so it
-// sends only one shape; these send the others.
-const MORE_SHAPES: { [K in CallName]?: ((api: CommsApi) => Promise<unknown>)[] } = {
-    'reactions.add': [
-        (api) => api.reactions.add({ commentId: ID, reaction: '👍' }),
-        (api) => api.reactions.add({ messageId: ID, reaction: '👍' }),
-    ],
-    'reactions.get': [
-        (api) => api.reactions.get({ commentId: ID }),
-        (api) => api.reactions.get({ messageId: ID }),
-    ],
-    'reactions.remove': [
-        (api) => api.reactions.remove({ commentId: ID, reaction: '👍' }),
-        (api) => api.reactions.remove({ messageId: ID, reaction: '👍' }),
-    ],
-    'search.search': [(api) => api.search.search({ workspaceId: WS, mentionSelf: true })],
-}
+// sends only one shape; these send the others, each checked on its own.
+const MORE_SHAPES = {
+    'reactions.add on a comment': (api) => api.reactions.add({ commentId: ID, reaction: '👍' }),
+    'reactions.add on a message': (api) => api.reactions.add({ messageId: ID, reaction: '👍' }),
+    'reactions.get on a comment': (api) => api.reactions.get({ commentId: ID }),
+    'reactions.get on a message': (api) => api.reactions.get({ messageId: ID }),
+    'reactions.remove on a comment': (api) =>
+        api.reactions.remove({ commentId: ID, reaction: '👍' }),
+    'reactions.remove on a message': (api) =>
+        api.reactions.remove({ messageId: ID, reaction: '👍' }),
+    'search.search for mentions, with no text': (api) =>
+        api.search.search({ workspaceId: WS, mentionSelf: true }),
+} satisfies Record<string, (api: CommsApi) => Promise<unknown>>
 
 // Records each request instead of sending it, and answers it with an error
 // so the call stops there.
 function recordingFetch(sent: Sent[]): CustomFetch {
     return async (url, options = {}) => {
         const { pathname, searchParams } = new URL(url)
-        const contentType = new Headers(options.headers).get('content-type')?.split(';')[0]
-        const body = options.body == null ? undefined : await new Response(options.body).text()
+        const headers = new Headers(options.headers)
+        const contentType = headers.get('content-type')?.split(';')[0]
+        const body = options.body == null ? undefined : new Response(options.body, { headers })
         sent.push({
             method: options.method ?? 'GET',
             path: pathname,
             ...(body === undefined
                 ? { fields: [...searchParams.keys()] }
-                : { contentType, fields: bodyFields(body, contentType) }),
+                : { contentType, fields: await bodyFields(body, contentType) }),
         })
         return {
             ok: false,
@@ -506,14 +507,12 @@ function recordingFetch(sent: Sent[]): CustomFetch {
     }
 }
 
-function bodyFields(body: string, contentType: string | undefined): string[] {
-    if (contentType === 'multipart/form-data') {
-        return [...body.matchAll(/; name="([^"]+)"/g)].map((match) => match[1])
-    }
-    if (contentType === 'application/x-www-form-urlencoded') {
-        return [...new URLSearchParams(body).keys()]
-    }
-    return Object.keys(JSON.parse(body))
+async function bodyFields(body: Response, contentType: string | undefined): Promise<string[]> {
+    if (contentType === 'application/json') return Object.keys(await body.json())
+    const form = await body.formData()
+    const fields: string[] = []
+    form.forEach((_value, field) => fields.push(field))
+    return fields
 }
 
 function problemsWith(spec: Spec, { method, path, contentType, fields }: Sent): string[] {
@@ -565,20 +564,32 @@ beforeAll(async () => {
     spec = (await response.json()) as Spec
 })
 
+async function problemsFrom(call: (api: CommsApi) => Promise<unknown>): Promise<string[]> {
+    const sent: Sent[] = []
+    await call(new CommsApi('token', { customFetch: recordingFetch(sent) })).catch(() => {})
+    expect(sent, 'the call sent no request').not.toHaveLength(0)
+    return sent.flatMap((request) => problemsWith(spec, request)).toSorted()
+}
+
 describe.each(Object.entries(CALLS))('%s', (client, methods) => {
     it.each(Object.entries(methods))('%s', async (method, args) => {
-        const name = `${client}.${method}` as CallName
-        const sent: Sent[] = []
-        const api = new CommsApi('token', { customFetch: recordingFetch(sent) })
-        const calls = api[client as keyof Calls] as unknown as Record<
-            string,
-            (...args: unknown[]) => Promise<unknown>
-        >
-        await calls[method](...args).catch(() => {})
-        for (const shape of MORE_SHAPES[name] ?? []) await shape(api).catch(() => {})
+        const problems = await problemsFrom((api) => {
+            const calls = api[client as keyof Calls] as unknown as Record<
+                string,
+                (...args: unknown[]) => Promise<unknown>
+            >
+            return calls[method](...args)
+        })
+        expect(problems).toEqual(
+            KNOWN_PROBLEMS[`${client}.${method}` as CallName]?.toSorted() ?? [],
+        )
+    })
+})
 
-        expect(sent, 'the call sent no request').not.toHaveLength(0)
-        const problems = new Set(sent.flatMap((request) => problemsWith(spec, request)))
-        expect([...problems].toSorted()).toEqual((KNOWN_PROBLEMS[name] ?? []).toSorted())
+describe('other shapes', () => {
+    it.each(Object.entries(MORE_SHAPES))('%s', async (name, call) => {
+        expect(await problemsFrom(call)).toEqual(
+            KNOWN_PROBLEMS[name as keyof typeof MORE_SHAPES]?.toSorted() ?? [],
+        )
     })
 })
