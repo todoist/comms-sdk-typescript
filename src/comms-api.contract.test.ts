@@ -23,7 +23,7 @@ type Sent = { method: string; path: string; contentType?: string; fields: string
 
 // Where the SDK and the server disagree today. Fixing one fails the test
 // until its line here goes, and any new one fails it too, so this only shrinks.
-const KNOWN_PROBLEMS: Record<string, string[]> = {
+const KNOWN_PROBLEMS: { [K in CallName]?: string[] } = {
     'users.getUser': ['GET users/getone: the server ignores "as_list"'],
     'workspaceUsers.getWorkspaceUsers': ['GET workspace_users/get: the server ignores "archived"'],
     'workspaceUsers.resendInvite': [
@@ -45,6 +45,7 @@ const KNOWN_PROBLEMS: Record<string, string[]> = {
         'GET search: the server ignores "mention_self"',
         'GET search: the server ignores "date_from"',
         'GET search: the server ignores "date_to"',
+        'GET search: the server requires "query"',
     ],
     'search.searchThread': [
         'GET search/thread: the server ignores "limit"',
@@ -87,7 +88,8 @@ const CHANNEL_SETTINGS = {
     isFavorited: true,
     icon: 1,
 }
-// A reaction goes on one of these; the SDK sends the first it finds.
+// A reaction goes on one of these. The SDK sends the first it finds, and
+// MORE_SHAPES sends the others.
 const REACTION_TARGET = { threadId: ID, commentId: ID, messageId: ID }
 const THREAD_ACTION = {
     id: ID,
@@ -108,6 +110,7 @@ type Calls = {
             : never]: Arguments<CommsApi[C][M]>
     }
 }
+type CallName = { [C in keyof Calls]: `${C}.${keyof Calls[C] & string}` }[keyof Calls]
 
 // The arguments each SDK method is called with. The type makes optional fields
 // required, so a new method or a new option fails the type check until it's
@@ -460,6 +463,24 @@ const CALLS: Calls = {
     },
 }
 
+// Calls that take one of several shapes. CALLS fills in every field, so it
+// sends only one shape; these send the others.
+const MORE_SHAPES: { [K in CallName]?: ((api: CommsApi) => Promise<unknown>)[] } = {
+    'reactions.add': [
+        (api) => api.reactions.add({ commentId: ID, reaction: '👍' }),
+        (api) => api.reactions.add({ messageId: ID, reaction: '👍' }),
+    ],
+    'reactions.get': [
+        (api) => api.reactions.get({ commentId: ID }),
+        (api) => api.reactions.get({ messageId: ID }),
+    ],
+    'reactions.remove': [
+        (api) => api.reactions.remove({ commentId: ID, reaction: '👍' }),
+        (api) => api.reactions.remove({ messageId: ID, reaction: '👍' }),
+    ],
+    'search.search': [(api) => api.search.search({ workspaceId: WS, mentionSelf: true })],
+}
+
 // Records each request instead of sending it, and answers it with an error
 // so the call stops there.
 function recordingFetch(sent: Sent[]): CustomFetch {
@@ -510,16 +531,19 @@ function problemsWith(spec: Spec, { method, path, contentType, fields }: Sent): 
 
     const query = (operation.parameters ?? []).filter((param) => param.in === 'query')
     const required = query.filter((param) => param.required).map((param) => param.name)
-    let accepted = query.map((param) => param.name)
+    const accepted = query.map((param) => param.name)
     if (method !== 'GET') {
         const content = operation.requestBody?.content ?? {}
         if (contentType && fields.length && !content[contentType]) {
             const reads = Object.keys(content).join(', ') || 'no body'
             return [`${call}: sends ${contentType}, the server reads ${reads}`]
         }
-        const ref = contentType && content[contentType]?.schema.$ref
-        const schema = ref ? spec.components.schemas[ref.split('/').pop() ?? ''] : undefined
-        accepted = Object.keys(schema?.properties ?? {})
+        // A request with no body is held to the body the route takes, so a
+        // call that drops its whole payload shows what's missing.
+        const declared = (contentType && content[contentType]) || Object.values(content)[0]
+        const ref = declared?.schema.$ref
+        const schema = ref ? spec.components.schemas[ref.split('/').pop() ?? ''] : declared?.schema
+        accepted.push(...Object.keys(schema?.properties ?? {}))
         required.push(...(schema?.required ?? []))
     }
 
@@ -543,6 +567,7 @@ beforeAll(async () => {
 
 describe.each(Object.entries(CALLS))('%s', (client, methods) => {
     it.each(Object.entries(methods))('%s', async (method, args) => {
+        const name = `${client}.${method}` as CallName
         const sent: Sent[] = []
         const api = new CommsApi('token', { customFetch: recordingFetch(sent) })
         const calls = api[client as keyof Calls] as unknown as Record<
@@ -550,10 +575,10 @@ describe.each(Object.entries(CALLS))('%s', (client, methods) => {
             (...args: unknown[]) => Promise<unknown>
         >
         await calls[method](...args).catch(() => {})
+        for (const shape of MORE_SHAPES[name] ?? []) await shape(api).catch(() => {})
 
         expect(sent, 'the call sent no request').not.toHaveLength(0)
-        expect(sent.flatMap((request) => problemsWith(spec, request))).toEqual(
-            KNOWN_PROBLEMS[`${client}.${method}`] ?? [],
-        )
+        const problems = new Set(sent.flatMap((request) => problemsWith(spec, request)))
+        expect([...problems].toSorted()).toEqual((KNOWN_PROBLEMS[name] ?? []).toSorted())
     })
 })

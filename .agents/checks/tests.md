@@ -18,3 +18,4 @@ Apply to every change that touches code or tests. The quality bar is `.agents/sk
 - `.not.toHaveBeenCalled()`, guards like `toBeDefined()` before reading a value, and `toMatchObject` on the request fields a test is about, as the test rules describe.
 - A test changing its assertions because the behaviour changed on purpose, when the description says so.
 - A refactor changing import paths, names or call sites in tests.
+- `src/comms-api.contract.test.ts` downloading the API spec the server publishes, and being left out of `npm test`. Checking the SDK against the live spec is its purpose, so it runs on its own in `api-contract.yml`.
