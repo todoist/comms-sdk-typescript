@@ -289,19 +289,19 @@ export class UsersClient extends BaseClient {
     }
 
     /**
-     * Validates that an arbitrary token is still active. Note this is sent
-     * as a GET — the token is read from the query string, not the
-     * Authorization header.
+     * Validates that an arbitrary token is still active. The token goes in a
+     * form field, not the Authorization header.
      *
      * @param token - The token to validate.
      */
     validateToken(token: string): Promise<void> {
         return request({
-            httpMethod: 'GET',
+            httpMethod: 'POST',
             baseUri: this.getBaseUri(),
             relativePath: `${ENDPOINT_USERS}/validate_token`,
             apiToken: undefined,
             payload: { token },
+            formEncoded: true,
             headers: this.headers,
             customFetch: this.customFetch,
         }).then(() => undefined)

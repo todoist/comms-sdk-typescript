@@ -26,9 +26,8 @@ export function paramsSerializer(params: Record<string, unknown>): string {
     return qs.toString()
 }
 
-const defaultHeaders = {
-    'Content-Type': 'application/json',
-}
+const JSON_CONTENT_TYPE = 'application/json'
+const FORM_CONTENT_TYPE = 'application/x-www-form-urlencoded'
 
 function getAuthHeader(apiToken: string): string {
     return `Bearer ${apiToken}`
@@ -39,13 +38,17 @@ function getRequestConfiguration(
     apiToken?: string,
     requestId?: string,
     customHeaders?: CustomHeaders,
+    formEncoded?: boolean,
 ): RequestConfig {
     const authHeader = apiToken ? { Authorization: getAuthHeader(apiToken) } : undefined
     const requestIdHeader = requestId ? { 'X-Request-Id': requestId } : undefined
-    // Custom headers sit below auth and request id so they can never clobber them.
+    const formHeader = formEncoded ? { 'Content-Type': FORM_CONTENT_TYPE } : undefined
+    // Custom headers sit below the form content type, auth and request id so
+    // they can never clobber them.
     const headers = mergeHeaders(
-        defaultHeaders,
+        { 'Content-Type': JSON_CONTENT_TYPE },
         resolveCustomHeaders(customHeaders),
+        formHeader,
         authHeader,
         requestIdHeader,
     )
@@ -62,6 +65,7 @@ export type RequestArgs = {
     requestId?: string
     headers?: CustomHeaders
     customFetch?: CustomFetch
+    formEncoded?: boolean
     /** Resolve on a 2xx response without reading its body. Error responses are still read. */
     ignoreResponseBody?: boolean
 }
@@ -76,10 +80,11 @@ export async function request<T>(args: RequestArgs): Promise<HttpResponse<T>> {
         requestId,
         headers,
         customFetch,
+        formEncoded,
         ignoreResponseBody,
     } = args
 
-    const config = getRequestConfiguration(baseUri, apiToken, requestId, headers)
+    const config = getRequestConfiguration(baseUri, apiToken, requestId, headers, formEncoded)
     const url = new URL(relativePath, config.baseURL).toString()
 
     const options: RequestInit & { timeout?: number; ignoreResponseBody?: boolean } = {
@@ -96,7 +101,8 @@ export async function request<T>(args: RequestArgs): Promise<HttpResponse<T>> {
     }
 
     if (payload && httpMethod !== 'GET') {
-        options.body = JSON.stringify(snakeCaseKeys(payload))
+        const body = snakeCaseKeys(payload) as Record<string, unknown>
+        options.body = formEncoded ? paramsSerializer(body) : JSON.stringify(body)
     }
 
     return fetchWithRetry<T>(url, options, 3, customFetch)

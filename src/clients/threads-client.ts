@@ -253,7 +253,13 @@ export class ThreadsClient extends BaseClient {
      * @param args.objIndex - The index of the last unread message. Use -1 to mark the whole thread as unread.
      */
     markUnreadForOthers(args: MarkThreadUnreadForOthersArgs): Promise<StatusOk> {
-        return this.simple('POST', 'mark_unread_for_others', { ...args }, StatusOkSchema)
+        const { id, ...rest } = args
+        return this.simple(
+            'POST',
+            'mark_unread_for_others',
+            { threadId: id, ...rest },
+            StatusOkSchema,
+        )
     }
 
     /**

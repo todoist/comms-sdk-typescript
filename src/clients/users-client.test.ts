@@ -295,6 +295,40 @@ describe('UsersClient update', () => {
     })
 })
 
+describe('UsersClient validateToken', () => {
+    it.each([
+        { headers: undefined },
+        { headers: { 'content-type': 'application/json; charset=utf-8' } },
+    ])(
+        'sends the token as a form field on a POST, without the caller’s own token (custom headers: $headers)',
+        async ({ headers }) => {
+            const sent: Record<string, string | null> = {}
+            server.use(
+                http.all(apiUrl('api/v1.0/users/validate_token'), async ({ request }) => {
+                    Object.assign(sent, {
+                        method: request.method,
+                        contentType: request.headers.get('content-type'),
+                        authorization: request.headers.get('authorization'),
+                        body: await request.text(),
+                    })
+                    return HttpResponse.json({ status: 'ok' })
+                }),
+            )
+
+            await new UsersClient({ apiToken: TEST_API_TOKEN, headers }).validateToken(
+                'token-to-check',
+            )
+
+            expect(sent).toEqual({
+                method: 'POST',
+                contentType: 'application/x-www-form-urlencoded',
+                authorization: null,
+                body: 'token=token-to-check',
+            })
+        },
+    )
+})
+
 describe('UsersClient heartbeat', () => {
     it('sends POST, the only method the server takes', async () => {
         const sent = captureRequest(apiUrl('api/v1.0/users/heartbeat'), { status: 'ok' })
